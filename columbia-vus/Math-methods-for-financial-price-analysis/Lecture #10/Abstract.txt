@@ -1,0 +1,10 @@
+This is a presentation of the "DrawDown Measure in Portoflio Optimization" paper 
+accepted for publication to International Journal of Theoretical and Applied 
+Finance (IJTAF), published by the "World Scientific", to the Third World Congress 
+of the Bachelier Finance Society, held in Chicago, USA in July 2004. 
+
+In this presentation, we explain the advantages, properties and motivation behind 
+the DrawDown Risk Measure for Portfolio Optimization are presented in several 
+examples of market indices, and two practical portfolio selection problems: risk 
+allocation for a Futures Trend-Following Systems Portfolio, and a selection of 
+weights for a Long/Short Equity Portfolio. 

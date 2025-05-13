@@ -1,0 +1,53 @@
+```{r}
+# Reading in the given csv files
+ES_data = read.csv('ES-1min.csv')
+FT_data = read.csv('FT-1min.csv')
+
+# initializing the vectors and log vectors
+log_ES_Close = log(ES_data$Close)
+Sigma_ES = numeric(0)
+log_FT_Close = log(FT_data$Close)
+Sigma_FT = numeric(0)
+tau = 1:10000
+Log_tau = log(tau)
+
+# calculating and storing respective Sigmas
+for (t in tau)
+{
+  Sigma_ES[t] = sd(diff(log_ES_Close,t))
+  Sigma_FT[t] = sd(diff(FT.tau,t))
+  print(t)
+}
+
+# initializing log sigma vectors
+Log_Sigma_ES = log(Sigma_ES)
+Log_Sigma_FT = log(Sigma_FT)
+
+# plotting linear-linear graph
+plot(tau, Sigma_ES)
+plot(tau, Sigma_FT)
+
+# plotting log-log graph
+plot(Log_tau, Log_Sigma_ES)
+plot(Log_tau, Log_Sigma_FT)
+
+# initializing a data frame with relevant data for ease in generating models
+log_tau_sigma_data = cbind(Log_tau, Log_Sigma_ES, Log_Sigma_FT)
+log_tau_sigma_df = data.frame(log_tau_sigma_data)
+
+# generating log-log linear model and displaying summaries
+ES_log_linear_model = lm(Log_Sigma_ES ~ Log_tau, data = log_tau_sigma_df)
+summary(ES_log_linear_model)
+FT_log_linear_model = lm(Log_Sigma_FT ~ Log_tau, data = log_tau_sigma_df)
+summary(FT_log_linear_model)
+```
+
+```{r}
+
+# plot Log_Sigma_ES and Log_Sigma_FT on the y-axis and tau on the x-axis
+plot(Log_tau, Log_Sigma_ES, col = "blue", xlab = "Log_tau", ylab = "Log_Sigma_ES and Log_Sigma_FT")
+points(Log_tau, Log_Sigma_FT, col = "red")
+
+# adding a legend
+legend("topright", legend = c("ES", "FT"), col = c("blue", "red"), pch = 1)
+```

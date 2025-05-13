@@ -1,0 +1,39 @@
+---
+title: "MATH GR 5360 HW1 Problem 11"
+author: 'Dhyey Mavani (ddm2149)'
+date: "2/26/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+ES = read.csv('ES-1min.csv')
+FT = read.csv('FT-1min.csv')
+ES.tau = log(ES$Close)
+Sigma.tau_ES = numeric(0)
+FT.tau = log(FT$Close)
+Sigma.tau_FT = numeric(0)
+for (i in 1:10000)
+{
+  Sigma.tau_ES[i] = sd(diff(ES.tau,i))
+  Sigma.tau_FT[i] = sd(diff(FT.tau,i))
+  print(i)
+}
+# Log-Log
+tau = 1:10000
+Log.tau = log(tau)
+Log.Sigma.tau_ES = log(Sigma.tau_ES)
+Log.Sigma.tau_FT = log(Sigma.tau_FT)
+# PLOT
+plot(tau,Sigma.tau_ES)
+plot(tau,Sigma.tau_FT)
+plot(Log.tau,Log.Sigma.tau_ES)
+plot(Log.tau,Log.Sigma.tau_FT)
+#Statistical Summary
+df = cbind(Log.tau,Log.Sigma.tau_ES,Log.Sigma.tau_FT)
+df = data.frame(df)
+lm_ES = lm(Log.Sigma.tau_ES ~ Log.tau, data = df)
+summary(lm_ES)
+lm_FT = lm(Log.Sigma.tau_FT ~ Log.tau, data =df)
+summary(lm_FT)
+```
