@@ -1,0 +1,4 @@
+"0","# plotting the location of the tangency portfolio"
+"0","points(sdP[tangency_location],"
+"0","       muP[tangency_location],"
+"0","       col=""blue"")"

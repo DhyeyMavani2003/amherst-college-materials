@@ -1,0 +1,123 @@
+```{r}
+# Q1
+data <- read.csv("HW2-S22-DATA.csv")
+
+ks.test(data$MSOFT, "pnorm", mean = mean(data$MSOFT), sd = sd(data$MSOFT))
+ks.test(data$GE, "pnorm", mean = mean(data$GE), sd = sd(data$GE))
+ks.test(data$GM, "pnorm", mean = mean(data$GM), sd = sd(data$GM))
+```
+
+```{r}
+bondvalue = function(c, T, r, par)
+{
+#       Computes bv = bond values (current prices) corresponding
+#       to all values of yield to maturity in the
+#       input vector r
+#
+# INPUT
+#        c = coupon payment (semiannual)
+#        T = time to maturity (in years)
+#        r = vector of yields to maturity (semiannual rates)
+#        par = par value
+#
+bv = c / r + (par - c / r) * (1 + r)^(-2 * T)
+bv
+}
+
+price = 1200
+C = 40
+T= 30
+par = 1000
+#   current price of the bond
+#   coupon payment
+#   time to maturity
+#   par value of the bond
+r = seq(0.02, 0.05, length = 300)
+value = bondvalue(C, T, r, par)
+yield2M = spline(value, r, xout = price) # spline interpolation
+
+plot(r, value, xlab = 'yield to maturity', ylab = 'price of bond', type = "l", main = "par = 1000, coupon payment = 40, T = 30", lwd = 2)
+abline(h = 1200)
+abline(v = yield2M)
+   
+   
+```
+
+```{r}
+uniroot(function(r) r^2 - 0.5, c(0.7, 0.8))
+```
+
+```{r}
+
+price_eqn <- function(r) {
+  bond_price <- 1200
+  face_value <- 1000
+  coupon_payment <- 40
+  n <- 60
+  bond_price - (coupon_payment/r * (1 - (1 + r)^(-n/2)) + face_value/(1 + r)^(n/2))
+}
+
+uniroot(price_eqn, c(0, 1))
+
+```
+
+```{r}
+save_plots = FALSE
+
+set.seed(0) 
+
+# P 1:
+#
+bondvalue = function(c, T, r, par){
+    #
+    # Computes bv = bond values (current prices) corresponding
+    # to all values of yield to maturity in the input vector r
+    #
+    # INPUT
+    # c = coupon payment (semiannual)
+    # T = time to maturity (in years)
+    # r = vector of yields to maturity (semiannual rates)
+    # par = par value
+    #
+    bv = c/r + (par - c/r) * (1+r)^(-2*T)
+    bv 
+}
+
+# Computes the yield to maturity of a bond paying semiannual coupon payments
+#
+# price, coupon payment, and time to maturity (in years) are set below
+#
+# Uses the function "bondvalue"
+#
+price = 1200 # current price of the bond
+C = 40       # coupon payment
+T = 30       # time to maturity
+par = 1000   # par value of the bond
+
+r = seq( 0.02, 0.05, length.out=500 )
+value = bondvalue(C, T, r, par)
+yield2M = spline(value, r, xout=price) # spline interpolation
+
+if( save_plots ){ postscript("../../WriteUp/Graphics/Chapter3/chap_3_prob_1_plot.eps", onefile=FALSE, horizontal=FALSE) }
+plot( r, value, xlab='yield to maturity', ylab='price of bond', type='l', main='par= 1000, coupon payment= 40, T= 30', lwd=2 )
+abline(h=price)
+abline(v=yield2M$y)
+if( save_plots ){ dev.off() }
+
+
+# P 2:
+#
+uniroot( function(r) r^2 - 0.5, c(0.7,0.8) )
+
+# P 3:
+#
+uniroot( function(r) bondvalue(C, T, r, par) - price, c(0.03,0.04) )
+
+# P 4:
+#
+uniroot( function(r) bondvalue(280, 8, r, 10000) - 9800, c(0.01,0.04) )
+
+# P 5:
+#
+uniroot( function(r) bondvalue(35, 20, r, 1000) - 1050.0, c(0.01, 0.04) )
+```

@@ -1,0 +1,1 @@
+"0","bc = boxcox(male.earnings ~ 1, lambda = seq(0.3, 0.45, by = 1 / 100),interp = FALSE)"

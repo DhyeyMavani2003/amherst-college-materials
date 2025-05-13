@@ -1,0 +1,296 @@
+```{r}
+library("Ecdat")
+?CPSch3
+data(CPSch3)
+dimnames(CPSch3)[[2]]
+male.earnings = CPSch3[CPSch3[ ,3] == "male", 2]
+sqrt.male.earnings = sqrt(male.earnings)
+log.male.earnings = log(male.earnings)
+thirdroot.male.earnings = (male.earnings)^(1/3)
+par(mfrow = c(2, 2))
+qqnorm(male.earnings ,datax = TRUE, main = "untransformed")
+qqnorm(sqrt.male.earnings, datax = TRUE,main = "square-root transformed")
+qqnorm(log.male.earnings, datax = TRUE, main = "log-transformed")
+qqnorm(thirdroot.male.earnings, datax = TRUE,main = "third-root transformed")
+par(mfrow = c(2, 2))
+boxplot(male.earnings, main = "untransformed")
+boxplot(sqrt.male.earnings, main = "square-root transformed")
+boxplot(log.male.earnings, main = "log-transformed")
+boxplot(thirdroot.male.earnings, main = "third-root transformed")
+par(mfrow = c(2,2))
+plot(density(male.earnings), main = "untransformed")
+plot(density(sqrt.male.earnings), main = "square-root transformed")
+plot(density(log.male.earnings), main = "log-transformed")
+plot(density(thirdroot.male.earnings), main = "third-root transformed")
+
+```
+
+```{r}
+library("MASS")
+par(mfrow = c(1, 1))
+boxcox(male.earnings ~ 1)
+boxcox(male.earnings ~ 1, lambda = seq(0.3, 0.45, 1 / 100))
+bc = boxcox(male.earnings ~ 1, lambda = seq(0.3, 0.45, by = 1 / 100),interp = FALSE)
+ind = (bc$y == max(bc$y))
+ind2 = (bc$y > max(bc$y) - qchisq(0.95, df = 1) / 2)
+bc$x[ind]
+bc$x[ind2]
+idx = (bc$y > max(bc$y) - qchisq(0.99, df = 1) / 2)
+bc$x[idx]
+```
+
+```{r}
+library("fGarch")
+fit = sstdFit(male.earnings, hessian = TRUE)
+fit
+```
+
+
+```{r}
+library(Ecdat)
+data(CRSPday)
+dimnames(CRSPday)[[2]]
+r = CRSPday[ ,5]
+plot(r)
+mode(r)
+class(r)
+r2 = as.numeric(r)
+class(r2)
+plot(r2)
+cov(CRSPday[ ,4:6])
+cor(CRSPday[ ,4:6]) 
+apply(CRSPday[ ,4:6], 2, mean)
+```
+
+```{r}
+# install.packages("readxl")
+library(readxl)
+
+data <- read_excel("CAPM-DATA-1.xlsx")
+
+data
+```
+
+```{r}
+norm.MSOFT <- fitdist(data$MSOFT, "norm") # Normal
+summary(norm.MSOFT)
+```
+
+```{r MSOFT fitting}
+fit_standard_t_MSOFT <- stdFit(data$MSOFT)
+fit_skewed_t_MSOFT <- sstdFit(data$MSOFT)
+fit_ged_MSOFT <- gedFit(data$MSOFT)
+fit_skewed_ged_MSOFT <- sgedFit(data$MSOFT)
+
+AIC_fit_standard_t_MSOFT = 2*(fit_standard_t_MSOFT$objective) + 2*(3)
+BIC_fit_standard_t_MSOFT = 2*(fit_standard_t_MSOFT$objective) + (log(120))*(3)
+
+AIC_fit_skewed_t_MSOFT = 2*(fit_skewed_t_MSOFT$minimum) + 2*(4)
+BIC_fit_skewed_t_MSOFT = 2*(fit_skewed_t_MSOFT$minimum) + (log(120))*(4)
+
+AIC_fit_ged_MSOFT = 2*(fit_ged_MSOFT$objective) + 2*(3)
+BIC_fit_ged_MSOFT = 2*(fit_ged_MSOFT$objective) + (log(120))*(3)
+
+AIC_fit_skewed_ged_MSOFT = 2*(fit_standard_t_MSOFT$objective) + 2*(4)
+BIC_fit_skewed_ged_MSOFT = 2*(fit_standard_t_MSOFT$objective) + (log(120))*(4)
+
+cat("\n Standard t fitting gives following parameters \n")
+cat("\n", fit_standard_t_MSOFT$par)
+cat("\n AIC is:", AIC_fit_standard_t_MSOFT)
+cat("\n BIC is:", BIC_fit_standard_t_MSOFT)
+cat("\n")
+cat("\n Skewed t fitting gives following parameters \n")
+cat("\n",fit_skewed_t_MSOFT$estimate)
+cat("\n AIC is:", AIC_fit_skewed_t_MSOFT)
+cat("\n BIC is:", BIC_fit_skewed_t_MSOFT)
+cat("\n")
+cat("\n GED fitting gives following parameters \n")
+cat("\n",fit_ged_MSOFT$par)
+cat("\n AIC is:", AIC_fit_ged_MSOFT)
+cat("\n BIC is:", BIC_fit_ged_MSOFT)
+cat("\n")
+cat("\n Skewed GED fitting gives following parameters \n")
+cat("\n",fit_skewed_ged_MSOFT$par)
+cat("\n AIC is:", AIC_fit_skewed_ged_MSOFT)
+cat("\n BIC is:", BIC_fit_skewed_ged_MSOFT)
+cat("\n")
+```
+
+```{r}
+norm.GE <- fitdist(data$GE, "norm") # Normal
+summary(norm.GE)
+```
+
+```{r GE fitting}
+fit_standard_t_GE <- stdFit(data$GE)
+fit_skewed_t_GE <- sstdFit(data$GE)
+fit_ged_GE <- gedFit(data$GE)
+fit_skewed_ged_GE <- sgedFit(data$GE)
+
+AIC_fit_standard_t_GE = 2*(fit_standard_t_GE$objective) + 2*(3)
+BIC_fit_standard_t_GE = 2*(fit_standard_t_GE$objective) + (log(120))*(3)
+
+AIC_fit_skewed_t_GE = 2*(fit_skewed_t_GE$minimum) + 2*(4)
+BIC_fit_skewed_t_GE = 2*(fit_skewed_t_GE$minimum) + (log(120))*(4)
+
+AIC_fit_ged_GE = 2*(fit_ged_GE$objective) + 2*(3)
+BIC_fit_ged_GE = 2*(fit_ged_GE$objective) + (log(120))*(3)
+
+AIC_fit_skewed_ged_GE = 2*(fit_standard_t_GE$objective) + 2*(4)
+BIC_fit_skewed_ged_GE = 2*(fit_standard_t_GE$objective) + (log(120))*(4)
+
+cat("\n Standard t fitting gives following parameters \n")
+cat("\n", fit_standard_t_GE$par)
+cat("\n AIC is:", AIC_fit_standard_t_GE)
+cat("\n BIC is:", BIC_fit_standard_t_GE)
+cat("\n")
+cat("\n Skewed t fitting gives following parameters \n")
+cat("\n",fit_skewed_t_GE$estimate)
+cat("\n AIC is:", AIC_fit_skewed_t_GE)
+cat("\n BIC is:", BIC_fit_skewed_t_GE)
+cat("\n")
+cat("\n GED fitting gives following parameters \n")
+cat("\n",fit_ged_GE$par)
+cat("\n AIC is:", AIC_fit_ged_GE)
+cat("\n BIC is:", BIC_fit_ged_GE)
+cat("\n")
+cat("\n Skewed GED fitting gives following parameters \n")
+cat("\n",fit_skewed_ged_GE$par)
+cat("\n AIC is:", AIC_fit_skewed_ged_GE)
+cat("\n BIC is:", BIC_fit_skewed_ged_GE)
+cat("\n")
+```
+
+```{r}
+norm.GM <- fitdist(data$GM, "norm") # Normal
+summary(norm.GM)
+```
+
+```{r GM fitting}
+fit_standard_t_GM <- stdFit(data$GM)
+fit_skewed_t_GM <- sstdFit(data$GM)
+fit_ged_GM <- gedFit(data$GM)
+fit_skewed_ged_GM <- sgedFit(data$GM)
+
+AIC_fit_standard_t_GM = 2*(fit_standard_t_GM$objective) + 2*(3)
+BIC_fit_standard_t_GM = 2*(fit_standard_t_GM$objective) + (log(120))*(3)
+
+AIC_fit_skewed_t_GM = 2*(fit_skewed_t_GM$minimum) + 2*(4)
+BIC_fit_skewed_t_GM = 2*(fit_skewed_t_GM$minimum) + (log(120))*(4)
+
+AIC_fit_ged_GM = 2*(fit_ged_GM$objective) + 2*(3)
+BIC_fit_ged_GM = 2*(fit_ged_GM$objective) + (log(120))*(3)
+
+AIC_fit_skewed_ged_GM = 2*(fit_standard_t_GM$objective) + 2*(4)
+BIC_fit_skewed_ged_GM = 2*(fit_standard_t_GM$objective) + (log(120))*(4)
+
+cat("\n Standard t fitting gives following parameters \n")
+cat("\n", fit_standard_t_GM$par)
+cat("\n AIC is:", AIC_fit_standard_t_GM)
+cat("\n BIC is:", BIC_fit_standard_t_GM)
+cat("\n")
+cat("\n Skewed t fitting gives following parameters \n")
+cat("\n",fit_skewed_t_GM$estimate)
+cat("\n AIC is:", AIC_fit_skewed_t_GM)
+cat("\n BIC is:", BIC_fit_skewed_t_GM)
+cat("\n")
+cat("\n GED fitting gives following parameters \n")
+cat("\n",fit_ged_GM$par)
+cat("\n AIC is:", AIC_fit_ged_GM)
+cat("\n BIC is:", BIC_fit_ged_GM)
+cat("\n")
+cat("\n Skewed GED fitting gives following parameters \n")
+cat("\n",fit_skewed_ged_GM$par)
+cat("\n AIC is:", AIC_fit_skewed_ged_GM)
+cat("\n BIC is:", BIC_fit_skewed_ged_GM)
+cat("\n")
+```
+
+```{r}
+norm.IBM <- fitdist(data$IBM, "norm") # Normal
+summary(norm.IBM)
+```
+
+```{r IBM fitting}
+fit_standard_t_IBM <- stdFit(data$IBM)
+fit_skewed_t_IBM <- sstdFit(data$IBM)
+fit_ged_IBM <- gedFit(data$IBM)
+fit_skewed_ged_IBM <- sgedFit(data$IBM)
+
+AIC_fit_standard_t_IBM = 2*(fit_standard_t_IBM$objective) + 2*(3)
+BIC_fit_standard_t_IBM = 2*(fit_standard_t_IBM$objective) + (log(120))*(3)
+
+AIC_fit_skewed_t_IBM = 2*(fit_skewed_t_IBM$minimum) + 2*(4)
+BIC_fit_skewed_t_IBM = 2*(fit_skewed_t_IBM$minimum) + (log(120))*(4)
+
+AIC_fit_ged_IBM = 2*(fit_ged_IBM$objective) + 2*(3)
+BIC_fit_ged_IBM = 2*(fit_ged_IBM$objective) + (log(120))*(3)
+
+AIC_fit_skewed_ged_IBM = 2*(fit_standard_t_IBM$objective) + 2*(4)
+BIC_fit_skewed_ged_IBM = 2*(fit_standard_t_IBM$objective) + (log(120))*(4)
+
+cat("\n Standard t fitting gives following parameters \n")
+cat("\n", fit_standard_t_IBM$par)
+cat("\n AIC is:", AIC_fit_standard_t_IBM)
+cat("\n BIC is:", BIC_fit_standard_t_IBM)
+cat("\n")
+cat("\n Skewed t fitting gives following parameters \n")
+cat("\n",fit_skewed_t_IBM$estimate)
+cat("\n AIC is:", AIC_fit_skewed_t_IBM)
+cat("\n BIC is:", BIC_fit_skewed_t_IBM)
+cat("\n")
+cat("\n GED fitting gives following parameters \n")
+cat("\n",fit_ged_IBM$par)
+cat("\n AIC is:", AIC_fit_ged_IBM)
+cat("\n BIC is:", BIC_fit_ged_IBM)
+cat("\n")
+cat("\n Skewed GED fitting gives following parameters \n")
+cat("\n",fit_skewed_ged_IBM$par)
+cat("\n AIC is:", AIC_fit_skewed_ged_IBM)
+cat("\n BIC is:", BIC_fit_skewed_ged_IBM)
+cat("\n")
+```
+
+```{r}
+library(MASS)
+library(fGarch)
+
+
+n = ncol(data)-2
+for (i in 1:n) {
+  data_col = data[[i]]
+  log_likelihood_sstd = function(x){
+    return(-sum(dsstd(data_col, x[1], x[2], x[3], x[4], log = TRUE)))
+  }
+  log_likelihood_ged = function(beta){
+    return(-sum(dged(data_col, mean = beta[1], sd = beta[2], nu = beta[3], log = TRUE)))
+  }
+  model_normal <- fitdistr(data[[i]], "normal")
+  initial = c(mean(data[[i]]), sd(data[[i]]), length(data[[i]]), 1)
+  model_sstd = optim(start, log_likelihood_sstd)
+  neg_log_likelihood_sstd = model_sstd$value
+  sstd_AIC = 2*neg_log_likelihood_sstd+2*length(model_sstd$par)
+  sstd_BIC = 2*neg_log_likelihood_sstd+log(length(data[[i]]))*length(model_sstd$par)
+  
+  initial = c(mean(data[[i]]), sd(data[[i]]), 1)
+  model_ged = optim(start, log_likelihood_ged)
+  neg_log_likelihood_ged = model_ged$value
+  ged_AIC = 2*neg_log_likelihood_ged+2*length(model_ged$par)
+  ged_BIC = 2*neg_log_likelihood_ged+log(length(data[[i]]))*length(model_ged$par)
+  
+  norm_AIC <- AIC(model_normal)
+  norm_BIC <- BIC(model_normal)
+  AIC <- c(norm_AIC,sstd_AIC,ged_AIC)
+  BIC <- c(norm_BIC,sstd_BIC,ged_BIC)
+  names(AIC) <- c("normal","sstd","ged")
+  names(BIC) <- c("normal","sstd","ged")
+  best_model_AIC <- c(model_normal, model_sstd, model_ged)[which.min(AIC)]
+  best_model_BIC <- c(model_normal, model_sstd, model_ged)[which.min(BIC)]
+  best_AIC <- which.min(AIC)
+  best_BIC <- which.min(BIC)
+  
+  optimal_models_AIC_wise[[i]] <- list(AIC, best_AIC, best_model_AIC)
+  optimal_models_BIC_wise[[i]] <- list(BIC, best_BIC, best_model_BIC)
+  
+}
+```

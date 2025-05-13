@@ -1,0 +1,367 @@
+# Problem 1
+
+```{r}
+school1 = scan("http://www2.stat.duke.edu/~pdh10/FCBS/Exercises/school1.dat") 
+school2 = scan("http://www2.stat.duke.edu/~pdh10/FCBS/Exercises/school2.dat") 
+school3 = scan("http://www2.stat.duke.edu/~pdh10/FCBS/Exercises/school3.dat") 
+```
+
+```{r}
+school1_bar = mean(school1)
+school2_bar = mean(school2)
+school3_bar = mean(school3)
+school1_s2 = var(school1)
+school2_s2 = var(school2)
+school3_s2 = var(school3)
+school1_s = sd(school1)
+school2_s = sd(school2)
+school3_s = sd(school3)
+school1_n = length(school1)
+school2_n = length(school2)
+school3_n = length(school3)
+```
+
+```{r}
+mu0 = 5
+sigma02 = 4
+k0 = 1
+nu0 = 2
+```
+
+```{r}
+school1_kn = k0 + school1_n
+school1_mun = (k0*mu0 + school1_n*school1_bar)/school1_kn
+school1_nun = nu0 + school1_n
+school1_sigman2 = (1/school1_nun)*(nu0*sigma02 + (school1_n-1)*school1_s2 + ((k0*school1_n)/school1_kn)*(school1_bar-mu0)^2)
+
+school2_kn = k0 + school2_n
+school2_mun = (k0*mu0 + school2_n*school2_bar)/school2_kn
+school2_nun = nu0 + school2_n
+school2_sigman2 = (1/school2_nun)*(nu0*sigma02 + (school2_n-1)*school2_s2 + ((k0*school2_n)/school2_kn)*(school2_bar-mu0)^2)
+
+school3_kn = k0 + school3_n
+school3_mun = (k0*mu0 + school3_n*school3_bar)/school3_kn
+school3_nun = nu0 + school3_n
+school3_sigman2 = (1/school3_nun)*(nu0*sigma02 + (school3_n-1)*school3_s2 + ((k0*school3_n)/school3_kn)*(school3_bar-mu0)^2)
+
+```
+
+```{r}
+school1_invsigma2 = rgamma(10000, school1_nun/2, school1_nun*school1_sigman2/2)
+school1_sigma2 = 1/school1_invsigma2
+school1_theta = rnorm(10000, school1_mun, sqrt(school1_sigma2/school1_kn))
+
+school2_invsigma2 = rgamma(10000, school2_nun/2, school2_nun*school2_sigman2/2)
+school2_sigma2 = 1/school2_invsigma2
+school2_theta = rnorm(10000, school2_mun, sqrt(school2_sigma2/school2_kn))
+
+school3_invsigma2 = rgamma(10000, school3_nun/2, school3_nun*school3_sigman2/2)
+school3_sigma2 = 1/school3_invsigma2
+school3_theta = rnorm(10000, school3_mun, sqrt(school3_sigma2/school3_kn))
+```
+
+```{r}
+school1_pred = rnorm(10000, school1_theta, sqrt(school1_sigma2))
+school2_pred = rnorm(10000, school2_theta, sqrt(school2_sigma2))
+school3_pred = rnorm(10000, school3_theta, sqrt(school3_sigma2))
+```
+
+```{r}
+cat("\n School 1 \n")
+cat("n is", school1_n, "\n")
+cat("posterior mean is", mean(school1_theta), "\n")
+cat("95% CI for posterior mean is \n")
+quantile(school1_theta, c(0.025,0.975))
+cat("posterior standard deviation is", mean(sqrt(school1_sigma2)), "\n")
+cat("95% CI for posterior standard deviation is \n")
+quantile(sqrt(school1_sigma2), c(0.025,0.975))
+
+cat("\n School 2 \n")
+cat("n is", school2_n, "\n")
+cat("posterior mean is", mean(school2_theta), "\n")
+cat("95% CI for posterior mean is \n")
+quantile(school2_theta, c(0.025,0.975))
+cat("posterior standard deviation is", mean(sqrt(school2_sigma2)), "\n")
+cat("95% CI for posterior standard deviation is \n")
+quantile(sqrt(school2_sigma2), c(0.025,0.975))
+
+cat("\n School 3 \n")
+cat("n is", school3_n, "\n")
+cat("posterior mean is", mean(school3_theta), "\n")
+cat("95% CI for posterior mean is \n")
+quantile(school3_theta, c(0.025,0.975))
+cat("posterior standard deviation is", mean(sqrt(school3_sigma2)), "\n")
+cat("95% CI for posterior standard deviation is \n")
+quantile(sqrt(school3_sigma2), c(0.025,0.975))
+```
+
+```{r}
+mean(school1_theta < school2_theta & school2_theta < school3_theta) 
+mean(school1_theta < school3_theta & school3_theta < school2_theta) 
+mean(school2_theta < school1_theta & school1_theta < school3_theta) 
+mean(school2_theta < school3_theta & school3_theta < school1_theta) 
+mean(school3_theta < school1_theta & school1_theta < school2_theta) 
+mean(school3_theta < school2_theta & school2_theta < school1_theta)
+```
+
+```{r}
+mean(school1_pred < school2_pred & school2_pred < school3_pred) 
+mean(school1_pred < school3_pred & school3_pred < school2_pred) 
+mean(school2_pred < school1_pred & school1_pred < school3_pred) 
+mean(school2_pred < school3_pred & school3_pred < school1_pred) 
+mean(school3_pred < school1_pred & school1_pred < school2_pred) 
+mean(school3_pred < school2_pred & school2_pred < school1_pred)
+```
+
+```{r}
+mean(school1_theta > school2_theta & school1_theta > school3_theta)
+mean(school1_pred > school2_pred & school1_pred > school3_pred)
+```
+
+# Problem 2
+
+```{r}
+x <- matrix(c(53,38,40,39,35,32,40,36,44,47,48,47,33,31,68,72,37,45,38,48,32,27,70,71,56,55,24,21,29,26,28,24,66,62,68,60,59,53,54,53,43,42,31,32,39,29,51,38,43,42,34,33,43,40,71,65,40,35,22,17,47,50,51,50,66,61,32,29,45,41,64,57,38,30,40,37,60,28,70,64,28,26,38,38,36,29,35,39,37,31,59,65,36,30,40,39,44,40,37,36,47,44,35,31,31,31,41,40,25,22,43,34,41,43,34,28,39,36,35,32,34,33,44,41,42,41,26,28,33,32,68,68,33,35,47,40,73,50,39,34,65,61,26,26,33,32,79,61,70,62,40,33,56,57,31,28,53,47,70,68,61,61,28,26,26,24,43,29,43,46,32,32,49,45,51,43,47,45,52,47,46,45,43,40,24,23,33,35,34,34,75,55,52,52,38,26,42,41,48,42), ncol = 2, byrow = TRUE)
+
+length(x)
+```
+
+```{r}
+# Data from the textbook of pretest and posttest score
+#x = structure(y,.Dim = c(100L, 2L), .Dimnames = list(NULL, c("husband", "wife")))
+
+mu0<-c(0,0)
+L0<-matrix( c(10000,0,0,10000),nrow=2,ncol=2)
+
+nu0<-4
+S0<-matrix( c(100,0,0,100),nrow=2,ncol=2)
+
+n<-dim(x)[1]
+xbar = apply(x, 2, mean)
+Sigma<-cov(x) ; THETA<-SIGMA<-NULL
+
+
+library(MASS) # for the mvrnorm function
+# install.packages("MCMCpack")
+library(MCMCpack) # for the riwish function
+
+for(s in 1:20000) 
+{
+  
+  ###update theta
+  Ln<-solve( solve(L0) + n*solve(Sigma) )
+  mun<-Ln%*%( solve(L0)%*%mu0 + n*solve(Sigma)%*% xbar )
+  theta = mvrnorm(1,mun,Ln)  
+  
+  
+  ###update Sigma
+  Sn<- S0 + ( t(x)-c(theta) )%*%t( t(x)-c(theta) ) 
+  Sigma<-riwish(nu0+n, Sn)
+  # Sigma<-solve( rwish(1, nu0+n, solve(Sn)) )
+  
+  # Update the output
+  THETA = rbind(THETA,theta)
+  SIGMA = rbind(SIGMA,c(Sigma)) # notice the Sigma matrix is vectorized
+}
+
+cat("HDI of theta_h - theta_w is: \n")
+HDInterval::hdi(THETA[,1]-THETA[,2])
+cat("\n average of theta_h - theta_w is: \n")
+mean( THETA[,1] - THETA[,2])
+cat("\n probability of theta_h > theta_w is: \n")
+mean( THETA[,1] > THETA[,2])
+
+hist(THETA[,2], freq = FALSE, breaks = 20)
+hist(THETA[,1], add = T, freq = FALSE, col = "red", breaks = 20)
+
+bivn.kde <- kde2d(THETA[,1], THETA[,2], n = 200)
+contour(bivn.kde, nlevels = 50) # part a
+
+apply(THETA, 2, mean) # posterior mean of theta
+
+cov(THETA) # covariance matrix of the posterior distribution of theta
+# Compare to covariance of prior distribution
+L0
+
+#install.packages("emdbook")
+library(emdbook)
+library(coda)
+HPDregionplot(mcmc(THETA), add = T, col = "red") # region
+abline(a=0,b=1, col="red")
+
+
+
+# plot(density(SIGMA[,2]))
+```
+
+```{r}
+library(HDInterval)
+cat("HDI of theta_h is: \n")
+hdi(THETA[,1])
+cat("HDI of theta_w is: \n")
+hdi(THETA[,2])
+
+corr = SIGMA[,2]/((SIGMA[,1]**0.5) * (SIGMA[,4]**0.5))
+hist(corr, freq = FALSE, breaks = 20)
+cat("HDI of corr is: \n")
+hdi(corr)
+
+diff = THETA[,1] - THETA[,2]
+hist(diff, freq = FALSE, breaks = 20)
+cat("HDI of diff is: \n")
+hdi(diff)
+```
+
+```{r}
+X_new <- NULL
+for(s in 1:20000) 
+{
+  my_new_X = mvrnorm(mu = THETA[s,],
+                     Sigma = matrix(c(SIGMA[s,1], SIGMA[s,2], SIGMA[s,3], SIGMA[s,4]),nrow = 2))
+  X_new = rbind(X_new, my_new_X)
+}
+```
+
+```{r}
+hist(X_new[,2], freq = FALSE, breaks = 50)
+hist(X_new[,1], freq = FALSE, breaks = 50, add = T, col = "red")
+
+mean(X_new[,1] > X_new[,2])
+```
+
+# Problem 3
+
+```{r}
+library(mvtnorm)
+
+# Define observed data
+data <- matrix(c(-3.3, -2.6, 0.1, -0.2, -1.1, -1.5, 2.7, 1.5, 2.0, 1.9, -0.4, -0.3), ncol = 2, byrow = TRUE)
+
+# Define grid of values for rho
+rho_grid <- seq(0, 1, length.out = 10000)
+
+# Define prior density function
+prior <- rep(1, length(rho_grid))
+
+# Define likelihood function
+likelihood <- sapply(rho_grid, function(rho) {
+  mean(dmvnorm(data, mean = c(0,0), sigma = matrix(c(1, rho, rho, 1), nrow = 2), log = TRUE))
+})
+
+# Compute unnormalized posterior density function
+posterior_unnorm <- prior * exp(likelihood)
+
+# Numerically integrate to obtain posterior density function
+posterior <- posterior_unnorm / sum(posterior_unnorm)
+
+# Plot posterior distribution
+plot(rho_grid, posterior, type = "l", xlab = "Correlation coefficient rho", ylab = "Posterior density")
+
+# Compute posterior mean, median, mode, and 95% interval
+post_mean <- sum(rho_grid * posterior)
+post_median <- rho_grid[which.min(abs(cumsum(posterior) - 0.5))]
+post_mode <- rho_grid[which.max(posterior)]
+post_interval <- c(rho_grid[which.min(abs(cumsum(posterior) - 0.025))], rho_grid[which.min(abs(cumsum(posterior) - 0.975))])
+
+# Print results
+cat("Posterior mean: ", post_mean, "\n")
+cat("Posterior median: ", post_median, "\n")
+cat("Posterior mode: ", post_mode, "\n")
+cat("95% posterior interval: [", post_interval[1], ", ", post_interval[2], "]\n")
+
+```
+
+# Problem 4
+
+```{r}
+gibbs_sampler <- function(c, S=10000) {
+  x <- numeric(S)
+  y <- numeric(S)
+  y[1] <- runif(1, 0, 1)
+  for (i in 2:S) {
+    x[i] <- runif(1, max(y[i-1]-c, 0), min(y[i-1]+c, 1))
+    y[i] <- runif(1, max(x[i]-c, 0), min(x[i]+c, 1))
+  }
+  return(list(x=x, y=y))
+}
+
+
+# Test the sampler
+c_values <- c(0.25, 0.05, 0.02)
+for (c in c_values) {
+  res <- gibbs_sampler(c)
+  x <- res$x
+  y <- res$y
+  cat(paste("c =", c, "\n"))
+  cat(paste("Mean of x:", mean(x), "\n"))
+  cat(paste("Mean of y:", mean(y), "\n"))
+}
+```
+
+```{r}
+par(mfrow=c(2, 2))
+for (i in seq_along(c_values)) {
+  res <- gibbs_sampler(c_values[i])
+  x <- res$x
+  y <- res$y
+  # Traceplots
+  plot(x, type="l", main=paste("Traceplot of x, c =", c_values[i]))
+  plot(y, type="l", main=paste("Traceplot of y, c =", c_values[i]))
+  
+  # Scatterplot
+  plot(x, y, main=paste("Scatterplot of (x, y), c =", c_values[i]))
+
+}
+```
+
+```{r}
+# The sampler will perform worse and worse as c gets smaller because the support of the joint distribution becomes more and more restricted, making it harder for the sampler to explore the entire space. This is reflected in the traceplots, where we see that the samples start to get stuck in certain regions and don't explore the whole space as much.
+```
+
+
+
+```{r}
+gibbs_sampler <- function(c, S=10000) {
+  u <- numeric(S)
+  v <- numeric(S)
+  v[1] <- 0.005
+  for (i in 2:S) {
+    u[i] <- runif(1, max(-v[i-1], 0), min(1-v[i-1], 1))
+    v[i] <- runif(1, max(-u[i], -c/2), min(1-u[i], c/2))
+  }
+  return(list(u=u, v=v))
+}
+
+set.seed(123)
+c_values <- c(0.25, 0.05, 0.02)
+for (c in c_values) {
+  res <- gibbs_sampler(c)
+  u <- res$u
+  v <- res$v
+  cat(paste("c =", c, "\n"))
+  cat(paste("Mean of u:", mean(u), "\n"))
+  cat(paste("Mean of v:", mean(v), "\n"))
+}
+
+library(ggplot2)
+
+par(mfrow=c(2, 2))
+for (i in seq_along(c_values)) {
+  res <- gibbs_sampler(c_values[i])
+  u <- res$u
+  v <- res$v
+  
+  # Traceplots
+  plot(u, type="l", main=paste("Traceplot of u, c =", c_values[i]))
+  plot(v, type="l", main=paste("Traceplot of v, c =", c_values[i]))
+  
+  # Scatterplot
+  plot(u, v, main=paste("Scatterplot of (u, v), c =", c_values[i]))
+  
+  # Alternative version of scatterplot using ggplot2
+  ggplot(data=data.frame(u=u, v=v)) + 
+    geom_point() + 
+    ggtitle(paste("Scatterplot of (u, v), c =", c_values[i]))
+}
+
+```

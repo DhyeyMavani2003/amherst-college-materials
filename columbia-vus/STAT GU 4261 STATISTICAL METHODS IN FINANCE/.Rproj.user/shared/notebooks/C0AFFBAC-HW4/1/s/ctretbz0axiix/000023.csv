@@ -1,0 +1,7 @@
+"0",""
+"0","# locating minimum variance portfolio where minimum sd is achieved "
+"0","min_var_location = (sdP == min(sdP))"
+"0","# plotting the location of the minimum variance portfolio"
+"0","points(sdP[min_var_location],"
+"0","       muP[min_var_location],"
+"0","       col=""red"")"

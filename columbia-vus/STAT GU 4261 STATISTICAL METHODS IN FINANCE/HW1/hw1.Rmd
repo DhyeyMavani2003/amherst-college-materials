@@ -1,0 +1,50 @@
+```{r}
+niter = 1.e5
+log_lock_profit = log(1.e6 + 100000) 
+log_lock_loss = log(1.e6 - 50000) 
+
+above = rep(0,niter)
+below = rep(0,niter)
+middle = rep(0,niter)
+
+set.seed(2009)
+
+for( i in 1:niter ){
+  r = rnorm(100, mean=0.05/253, sd=0.23/sqrt(253)) 
+  logPrice = log(1.e6) + cumsum(r)
+  minlogP = min(logPrice)
+  maxlogP = max(logPrice)
+  
+  bool_lock_loss = minlogP <= log_lock_loss
+  bool_lock_profit = maxlogP >= log_lock_profit
+  
+  # only lock loss reached
+  if( bool_lock_loss & !bool_lock_profit ){ 
+    below[i] = 1
+  }
+  
+  # only lock profit reached
+  if( !bool_lock_loss & bool_lock_profit ){ 
+    above[i] = 1
+  }
+  
+  # both reached and finding what happened first
+  if( bool_lock_loss & bool_lock_profit ){ 
+    days_to_min = which(logPrice <= log_lock_loss )[1] 
+    days_to_max = which(logPrice >= log_lock_profit )[1] 
+    
+    if( days_to_min < days_to_max ){ # lock loss first
+      below[i] = 1
+    }else{ # lock profit first 
+      above[i] = 1 
+    }
+  }
+  
+  # neither lock loss nor lock profit reached
+  if( !bool_lock_loss & !bool_lock_profit ){
+    middle[i] = 1
+  }
+}
+print(mean(above))
+print(mean(below))
+```

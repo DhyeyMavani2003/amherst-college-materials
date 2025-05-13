@@ -1,0 +1,8 @@
+"0",""
+"0","# locating the efficient frontier "
+"0","# where return is greater than that of the minimum variance portfolio"
+"0","efficient_frontier_location = (muP > muP[min_var_location])"
+"0","# plotting the efficient frontier"
+"0","lines(sdP[efficient_frontier_location],"
+"0","      muP[efficient_frontier_location],"
+"0","      col=""cyan"")"

@@ -1,0 +1,299 @@
+# STAT5224 HW 6
+#### Juan Nathaniel (jn2808)
+
+## Question 1
+#### a
+```{r}
+data <- read.table("http://www2.stat.duke.edu/~pdh10/FCBS/Exercises/pdensity.dat", header = TRUE)
+
+# Fit the model for each group (plot)
+fits <- by(data, data$plot, function(df) lm(yield ~ density + I(density^2), data=df))
+
+# Plot the regression lines
+plot(yield ~ density, data=data, pch=16, xlab="Planting Density", ylab="Yield")
+x <- seq(0, 8, by=0.1)
+for(i in 1:length(fits)) {
+  y <- predict(fits[[i]], newdata=data.frame(density=x, density_sq=x^2))
+  lines(x, y, col=i)
+}
+
+# Ad-hoc estimates of theta and Sigma for each plot
+theta = sapply(fits, function(fit) coef(fit))
+expected_theta <- apply(theta, 1, mean)
+Sigma = sapply(fits, function(fit) coef(fit))
+expected_Sigma <- apply(Sigma, 1, var)
+
+theta
+expected_theta
+Sigma
+expected_Sigma
+
+# Estimate of sigma^2 using all data across plots
+residuals <- data$yield - predict(lm(yield ~ density + I(density^2), data=data))
+sigma2 <- var(residuals)
+
+sigma2
+```
+
+#### b
+```{r}
+# Load the rstan library
+library(rstan)
+library(ggplot2)
+
+# Define the Stan model
+hierarchical_model <- 
+"
+data {
+  int<lower=1> J;              // number of groups
+  int<lower=1> N[J];           // number of observations in each group
+  real yield[J, N[J]];         // yield data
+  real density[J, N[J]];       // density data
+}
+parameters {
+  vector[3] beta[J];           // coefficients for each group
+  vector<lower=0>[3] tau;      // group-level standard deviation
+  real<lower=0> sigma;         // error standard deviation
+}
+model {
+  tau ~ normal(0, 10);        // prior for group-level standard deviation
+  sigma ~ normal(0, 10);      // prior for error standard deviation
+  for (j in 1:J) {
+    matrix[3, 3] Sigma;
+    Sigma[1, 1] = tau[1] * tau[1];
+    Sigma[2, 2] = tau[2] * tau[2];
+    Sigma[3, 3] = tau[3] * tau[3];
+    Sigma[1, 2] = 0;
+    Sigma[2, 1] = 0;
+    Sigma[1, 3] = 0;
+    Sigma[3, 1] = 0;
+    Sigma[2, 3] = 0;
+    Sigma[3, 2] = 0;
+    beta[j] ~ multi_normal(rep_vector(0, 3), Sigma);
+    for (n in 1:N[j]) {
+      yield[j, n] ~ normal(beta[j][1] + beta[j][2] * density[j, n] + beta[j][3] * (density[j, n].*density[j, n]), sigma);
+    }
+  }
+}
+"
+
+# Prepare the data for Stan
+stan_data <- list(
+  J = length(unique(data$plot)),
+  N = table(data$plot),
+  yield = split(data$yield, data$plot),
+  density = split(data$density, data$plot)
+)
+
+
+# Fit the model
+compiled_model <- stan_model(model_code = hierarchical_model)
+stan_fit <- sampling(compiled_model, data = stan_data, iter = 2000, chains = 4, warmup = 1000)
+```
+
+#### c
+```{r}
+# extract coefficients
+beta_samples <- extract(stan_fit, "beta")$beta
+
+# Plot the regression lines
+x <- seq(0, 8, by=0.1)
+plot(yield ~ density, data=data, pch=16, xlab="Planting Density", ylab="Yield")
+for (j in 1:10) {
+  beta_j <- beta_samples[,j,]
+  y_pred <- mean(beta_j[,1]) + x * mean(beta_j[,2]) + x^2 * mean(beta_j[,3])
+  lines(x, y_pred, col = j)
+}
+
+# Extract the posterior means and variances of beta2 for each group
+beta_mean <- apply(beta_samples, c(2,3), mean)
+beta_var <- apply(beta_samples, c(2,3), var)
+beta_mean # for beta1, beta2, beta3
+beta_var # for tau1, tau2, tau3
+```
+We observe that the curvature (quadratic term) is not as prominent as in the OLS case (one order of magnitude difference). This is highlighted in the posterior mean for beta_3 which has a relatively low value (or contribution) to the overall prediction. Beta_1 and Beta_2 are relatively similar for both OLS and our hierarchical model.
+
+#### d
+```{r}
+# get mean beta_posterior
+theta_mean_poster = apply(beta_mean, 2, mean)
+theta_var_poster = apply(beta_var, 2, mean)
+
+# Plot beta_prior and beta_posterior
+x <- seq(-10, 10, length.out = 100)
+for (i in 1:3){
+  y_prior <- dnorm(x, mean = expected_theta[i], sd = sqrt(expected_Sigma[i]))
+  y_post <- dnorm(x, mean = theta_mean_poster[i], sd = sqrt(theta_var_poster[i]))
+  title <- sprintf("Beta_%i", i)
+  # Plot the resulting curve
+  plot(x, y_prior, type = "l", lwd = 2, xlab = "x", ylab = "Density", ylim = c(0, 2), main=title)
+  lines(x, y_post)
+  legend("topleft", legend = c("Prior", "Posterior"), lty = 1)
+}
+```
+Here, we observe that both beta_1 and beta_2 have different distributions, while beta_3 have almost identical ones. Hence, we see that planting density effect on yield vary across groups.
+
+#### e
+```{r}
+x <- seq(2, 8, length.out = 1000)
+
+# Generate posterior samples of the regression coefficients
+post_samp <- as.matrix(stan_fit)
+
+# Compute the expected yield for each value of x
+y_hat <- apply(beta_samples, 1, function(coefs) coefs[1] + coefs[2]*x + coefs[3]*x^2)
+
+# Find the value of x that maximizes the expected yield
+xmax <- x[which.max(apply(y_hat, 2, mean))]
+xmax
+
+# Compute the variance of the residuals
+sigma2 <- mean(fit$residuals^2)
+
+# Compute the predictive distribution for yield at xmax
+y_pred <- apply(beta_samples, c(1,3), mean)[,1] + apply(beta_samples, c(1,3), mean)[,2]*xmax + apply(beta_samples, c(1,3), mean)[,3]*xmax^2 
+
+# Compute the 95% posterior predictive interval for yield at xmax
+ppi <- quantile(y_pred, c(0.025, 0.975))
+ppi
+```
+
+## Question 2
+```{r}
+#install.packages('brms')
+library(brms)
+library(rstan)
+data <- read.table("http://www2.stat.duke.edu/~pdh10/FCBS/Exercises/prayer.dat", header = TRUE)
+
+model <- brm(
+  formula = prayer ~ female + vocab + female:vocab,
+  data = data,
+  family = sratio("logit"),
+  prior = c(
+    set_prior("normal(0, 1)", class = "b"),
+    set_prior("normal(0, 1)", class = "Intercept")
+  ),
+  iter = 2000,
+  warmup = 1000,
+  chains = 4,
+  cores = 4
+)
+
+# Print the model summary
+summary(model)
+```
+
+```{r}
+stan_model <- model$model
+stan_data <- model$data
+
+x <- seq(-10, 10, length.out = 100)
+priors <- dnorm(x, mean = 0, sd = 1)
+
+# Extract posterior samples
+posterior_b_female <- as.data.frame(posterior_samples(model))['b_female']
+posterior_b_vocab <- as.data.frame(posterior_samples(model))['b_vocab']
+posterior_b_female_vocab <- as.data.frame(posterior_samples(model))['b_female:vocab']
+posteriors <- cbind(posterior_b_female, posterior_b_vocab, posterior_b_female_vocab)
+cols = c('female', 'vocab', 'female_vocab')
+colnames(posteriors) = cols
+
+for (i in 1:3){
+  # Plot the resulting curve
+  plot(x,priors, col = "red", lwd = 2, xlim=c(-1,1), ylim=c(0,3), main=cols[i])
+  hist(posteriors[,i], freq=F, main=cols[i], add=T)
+  legend("topright", c("Posterior", "Prior"), fill = c("black", "red"))
+}
+```
+```{r}
+# getting confidence interval
+
+quantile(posteriors[,1], c(0.025, 0.975)) # gender (female: 1)
+quantile(posteriors[,2], c(0.025, 0.975)) # vocab score
+quantile(posteriors[,3], c(0.025, 0.975)) # interaction between gender and vocab score
+```
+From the plots between the posterior and priors and from the 95% CI of the posterior, there seems to be little evidence that vocab score influences prayer (0 is within CI). However, it does appear that different gender influences prayer (0 is not within 95% ci). Similarly, the interaction between gender and vocab score influences prayer. Hence, prayer and score appear to diffes across the sexes. 
+
+## Question 3
+#### a
+First, let's recall the main components of the Probit model:
+
+1. The response variable $Y_i$ is binary, taking values in {0, 1}.
+2. The link function $g(z)$ is the cumulative distribution function (CDF) of the standard normal distribution, denoted as $\Phi(z)$.
+3. The linear predictor is $Z_i = \beta X_i + \epsilon_i$, where $\beta$ is the vector of coefficients, and $\epsilon_i$ is the error term.
+4. The error term $\epsilon_i$ follows a standard normal distribution with mean 0 and variance 1, i.e., $\epsilon_i \sim N(0,1)$.
+
+Now, let's derive the probability density function for $Y_i$. We have:
+
+$$P(Y_i = 1) = \Phi(Z_i)$$
+$$P(Y_i = 0) = 1 - \Phi(Z_i)$$
+
+Since $Y_i$ is binary, we can write the likelihood function for the observed data as:
+
+$$L(\beta) = \prod_{i=1}^{n}[\Phi(Z_i)]^{Y_i}[1-\Phi(Z_i)]^{1-Y_i}$$
+
+Taking the logarithm of the likelihood function, we get the log-likelihood:
+
+$$\ell(\beta) = \sum_{i=1}^{n}\{Y_i\log[\Phi(Z_i)] + (1-Y_i)\log[1-\Phi(Z_i)]\}$$
+
+Now, let's compute the derivative of the log-likelihood with respect to $\beta$. Using the chain rule, we have:
+
+$$\frac{\partial \ell(\beta)}{\partial \beta} = \sum_{i=1}^{n}\{Y_i\frac{\phi(Z_i)}{\Phi(Z_i)} - (1-Y_i)\frac{\phi(Z_i)}{1-\Phi(Z_i)}\}\frac{\partial Z_i}{\partial \beta}$$
+
+where $\phi(z)$ is the probability density function of the standard normal distribution. We can see that the derivative of the log-likelihood involves the pdf of the standard normal distribution:
+
+$$\phi(z) = \frac{1}{\sqrt{2\pi}}\exp\left(-\frac{(z-\mu)^2}{2\sigma^2}\right)$$
+
+For the standard normal distribution, $\mu = 0$ and $\sigma^2 = 1$, so we have:
+
+$$\phi(z) = \frac{1}{\sqrt{2\pi}}\exp\left(-\frac{z^2}{2}\right)$$
+
+Therefore, the probability density function of the Probit regression model is proportional to the exponential term in the standard normal distribution pdf:
+
+$$f(x) \propto \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)I(a,b)(x)$$
+
+with $\mu = 0$ and $\sigma^2 = 1$.
+
+#### b
+```{r}
+#install.packages('truncnorm')
+library(truncnorm)
+
+mu <- 8
+sigma_sq <- 3
+a <- 0
+b <- 2
+n <- 100
+
+# function to check if x is in (a,b)
+in_range <- function(x, a, b) {
+  if (x >= a & x <= b) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+# generate the sample using the alternative algorithm
+sample_runs <- rep(NA, n)
+total_runs <- 0
+count <- 0
+while (count < n) {
+  x <- rnorm(1, mean = mu, sd = sqrt(sigma_sq))
+  if (in_range(x, a, b)) {
+    count <- count + 1
+    sample_runs[count] <- x
+  }
+  total_runs <- total_runs + 1
+}
+cat("Iterations needed:", total_runs, "\n")
+
+# generate the sample using truncnorm package
+sample_truncnorm <- rtruncnorm(n, a = a, b = b, mean = mu, sd = sqrt(sigma_sq))
+
+# plot histograms of the two samples
+par(mfrow = c(1,2))
+hist(sample_runs, main = "Alternative vs truncnorm", xlab = "x", col = "lightblue")
+hist(sample_truncnorm, add=T, xlab = "x", col = "lightgreen", alpha=0.1)
+legend("topleft", c("Alternative", "truncnorm"), fill = c("lightblue", "lightgreen"))
+```

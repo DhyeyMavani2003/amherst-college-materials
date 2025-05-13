@@ -1,0 +1,144 @@
+```{r Q1}
+library(ggplot2)
+galenshore_pdf = function(y, a, theta) {
+  (2 / gamma(a)) * theta^(2 * a) * y^(2 * a - 1) * exp(-1 * (theta^2) * y^2)
+}
+y = seq(0.04, 5, by = 0.04)
+data_frame_to_be_plotted = rbind(
+  data.frame(y = y, density = galenshore_pdf(y, 1, 1), parameters = 'alpha = 1, theta = 1'),
+  data.frame(y = y, density = galenshore_pdf(y, 1, 2), parameters = 'alpha = 1, theta = 2'),
+  data.frame(y = y, density = galenshore_pdf(y, 2, 1), parameters = 'alpha = 2, theta = 1'),
+  data.frame(y = y, density = galenshore_pdf(y, 2, 2), parameters = 'alpha = 2, theta = 2')
+)
+
+ggplot(data_frame_to_be_plotted, aes(x = y, y = density, group = parameters, color = parameters)) +
+  geom_line() +labs(y= "Galenshore Probability Density", x = "The input variable y")
+```
+
+
+```{r Q2}
+library(HDInterval)
+
+hdi(qgamma, 0.95, shape = 237, rate = 20)
+hdi(qgamma, 0.95, shape = 118, rate = 13)
+```
+
+```{r}
+pbeta(13/33,118,237)
+```
+
+```{r final part (a)}
+# Plot of the posteriors and prior
+n_grid = 100
+p_grid = seq(from=6 , to= 15 , length.out= n_grid )
+
+prior1 = dgamma(p_grid, 120, 10)
+prior2 = dgamma(p_grid, 12, 1)
+posterior1 = dgamma(p_grid, 237, 20)
+posterior2 = dgamma(p_grid, 118, 13)
+plot(p_grid , prior1, type = "l", xlab="theta" , ylab="" , ylim =c(0, 0.8), lty = 2)
+lines(p_grid, posterior1, col = "black")
+lines(p_grid, prior2, col = "blue")
+lines(p_grid, posterior2, col = "red")
+
+legend(7, 0.8, legend=c("Posterior for Theta A", "Posterior for Theta B", "Prior for Theta A", "Prior for Theta B"),
+       col=c("black", "red", "black", "blue"), lty=c(1,1,2), cex=0.8)
+```
+
+
+```{r}
+a1 = 120 ; b1 = 10 # prior parameters for A
+n1 = 10 ; sx1 = 117 # data in group 1
+
+a2 = 12 ; b2 = 1 # prior parameters for B
+n2 = 12 ; sx2 = 106 # data in group 2 
+
+ans = 0
+for (i in 0:100) for (j in ((i+1):100))
+  ans = ans+ dnbinom(j, size=(a1+sx1), mu=(a1+sx1)/(b1+n1))*dnbinom(i, size=(a2+sx2), mu=(a2+sx2)/(b2+n2))
+cat("The required probability for part (i) is \n")
+ans
+
+ans = 0
+for (i in 0:100) for (j in (i:100))
+  ans = ans+ dnbinom(j, size=(a1+sx1), mu=(a1+sx1)/(b1+n1))*dnbinom(i, size=(a2+sx2), mu=(a2+sx2)/(b2+n2))
+cat("The required probability for part (ii) is \n")
+ans
+```
+
+```{r}
+# 3) Sampling from the posterior predictive distributions via theta:
+theta1.mc = rgamma(10000,237,20)
+theta2.mc = rgamma(10000,118,13)
+mean(theta1.mc-theta2.mc)
+```
+
+```{r}
+theta1.mc = rgamma(10000,237,20)
+theta2.mc = rgamma(10000,118,13)
+mean(theta1.mc>theta2.mc)
+```
+```{r}
+theta1.mc = rgamma(10000,237,20)
+theta2.mc = rgamma(10000,118,13)
+theta_diff.mc = theta1.mc - theta2.mc
+
+quantile(theta_diff.mc, c(0.025,0.975))
+
+```
+
+
+```{r}
+theta1.mc = rgamma(10000,237,20)
+theta2.mc = rgamma(10000,118,13)
+x1.mc = rpois (10000 , theta1.mc)
+x2.mc = rpois (10000 , theta2.mc)
+x_diff.mc = x1.mc - x2.mc
+
+hist(x_diff.mc, freq = F, ylim = c(0,0.15), main = "")
+title(paste("Posterior Predictive Distribution of Xnew_A - Xnew_B"))
+
+```
+
+```{r Q4}
+
+# Monte Carlo integration:
+# Compute the integral of (cos(50*x) + sin(20*x))^2 between 0 and 1
+
+g <- function(x){
+  (4*sqrt(1-x*x))
+}
+
+x = seq(0,1, len = 10000)
+plot(x, g(x), type = "l")
+integrate(g, 0, 1)
+
+n.sam <- 10000
+# step 1: generate n i.i.d samples from f (in this case uniform(0,1))
+x.sam <- runif(n.sam)
+
+# compute the MC approximation
+(theta.mc <- sum(sapply(x.sam, g))/n.sam)
+
+# Exact answer:
+pi
+
+# Try a different density f(x)
+n.sam <- 10000
+# step 1: generate n i.i.d samples from f (in this case uniform(0,1))
+x.sam <- rbeta(n.sam, 2, 2)
+
+# compute the MC approximation
+(theta.mc = mean(g(x.sam)/dbeta(x.sam, 2, 2)))
+```
+
+```{r}
+n.sam <- 10000
+# step 1: generate n i.i.d samples from f (in this case uniform(0,1))
+x.sam <- rbeta(n.sam, 2, 2)
+
+# compute the MC approximation
+theta.mc = mean(g(x.sam)/dbeta(x.sam, 2, 2))
+theta.mc
+# Very unstable!
+```

@@ -1,0 +1,454 @@
+---
+title: "SMF_Project"
+author: "Boris T-A"
+date: "2023-04-14"
+output: html_document
+---
+
+```{r}
+library(quantmod)
+library(dplyr)
+library(tidyquant)
+library(xts)
+```
+
+## Picking the 15 Assets 
+
+```{r}
+# Should be a nice selection of assets to start with... 
+tickers <- c("AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "BRK-B", "JNJ", "JPM", "V", "PG", "UNH", "MA", "NVDA", "DIS")
+
+```
+
+```{r}
+get_monthly_prices_and_returns <- function(ticker) {
+  prices <- getSymbols(ticker, src = "yahoo", from = "2015-01-01", to = "2021-12-31", auto.assign = FALSE)
+  adjusted_prices <- Ad(prices)
+  monthly_prices <- to.monthly(adjusted_prices, OHLC = FALSE, indexAt = "lastof")
+
+  # Calculate monthly returns
+  returns <- na.omit(periodReturn(monthly_prices, period = "monthly", type = "arithmetic"))
+
+  # Convert to data frame
+  prices_df <- data.frame(date = index(monthly_prices), price = coredata(monthly_prices))
+  colnames(prices_df) <- c("date", paste0(ticker, "_price"))
+
+  returns_df <- data.frame(date = index(returns), return = coredata(returns))
+  colnames(returns_df) <- c("date", paste0(ticker, "_return"))
+
+  return(list(prices = prices_df, returns = returns_df))
+}
+
+```
+
+```{r}
+prices_and_returns_list <- lapply(tickers, get_monthly_prices_and_returns)
+combined_prices <- Reduce(function(x, y) merge(x, y, by = "date", all = TRUE), lapply(prices_and_returns_list, function(x) x$prices))
+combined_returns <- Reduce(function(x, y) merge(x, y, by = "date", all = TRUE), lapply(prices_and_returns_list, function(x) x$returns))
+```
+
+
+```{r}
+head(combined_returns)
+combined_returns <- combined_returns[-1, ]
+head(combined_returns)
+head(combined_prices) # no need to remove first row 
+```
+
+```{r}
+# Convert risk free to monthly from annual 
+risk_free_rate<-rep_len(0.0094/12, length.out = length(combined_returns$date))
+
+final_data <- cbind(combined_returns, risk_free_rate)
+
+head(final_data)
+
+```
+- You should also plot your monthly prices and returns and comment on these plots.
+```{r}
+
+# Create separate plots with both prices and returns for each asset
+for (ticker in tickers) {
+  # Set up the layout for the two plots
+  par(mfrow = c(2, 1), mar = c(4, 4, 2, 1))
+  
+  # Get the monthly prices and returns for the current asset
+  prices <- combined_prices[, paste0(ticker, "_price")]
+  returns <- combined_returns[, paste0(ticker, "_return")]
+  
+  # Plot the monthly prices
+  plot(prices, main = paste(ticker, "Monthly Prices"), ylab = "Price", type ='l')
+  points(prices)
+  
+  # Plot the monthly returns
+  plot(returns, main = paste(ticker, "Monthly Returns"), ylab = "Return", type='l')
+  points(returns)
+}
+
+```
+
+```{r}
+library(moments)
+```
+## Sample Statistics 
+- Recall kurtosis & skewnness are indicative of normality ... 
+- Also, note that using S&P 500 as market index to find excess returns for market and market variance [check if this is correct!]
+```{r}
+
+# Fetch S&P 500 data
+data_for_market_index<-getSymbols("^GSPC", src = "yahoo", from = "2015-01-01", to = "2021-12-31", auto.assign = FALSE)
+
+# Calculate the S&P 500 monthly returns
+sp500_prices <- data_for_market_index$GSPC.Adjusted
+sp500_monthly_prices <- to.monthly(sp500_prices, OHLC = FALSE, indexAt = "lastof")
+sp500_monthly_returns <- na.omit(periodReturn(sp500_monthly_prices, period = "monthly", type = "arithmetic"))
+
+# Convert to data frame
+sp500_returns_df <- data.frame(date = index(sp500_monthly_returns), return = coredata(sp500_monthly_returns))
+colnames(sp500_returns_df) <- c("date", "SP500")
+
+# Merge the S&P 500 returns with the combined_returns data frame
+combined_returns <- merge(combined_returns, sp500_returns_df, by = "date", all = TRUE)
+head(combined_returns)
+combined_returns <- combined_returns[-1, ]
+head(combined_returns)
+
+excess_returns <- combined_returns
+for (i in 2:(ncol(combined_returns) - 1)) {
+  excess_returns[, i] <- combined_returns[, i] - final_data$risk_free_rate
+}
+market_excess_returns <- combined_returns$SP500 - final_data$risk_free_rate
+
+get_sample_statistics <- function(asset_excess_returns) {
+  # Filter out rows with missing data
+  complete_data <- na.omit(data.frame(asset_excess_returns, market_excess_returns))
+  
+  asset_mean <- mean(complete_data$asset_excess_returns, na.rm = TRUE) * 12
+  asset_sd <- sd(complete_data$asset_excess_returns, na.rm = TRUE) * sqrt(12)
+  asset_skewness <- moments::skewness(complete_data$asset_excess_returns, na.rm = TRUE)
+  asset_kurtosis <- moments::kurtosis(complete_data$asset_excess_returns, na.rm = TRUE)
+
+  # Calculate beta using the cov() and var() functions
+  asset_covariance <- cov(complete_data$asset_excess_returns, complete_data$market_excess_returns, use = "complete.obs")
+  market_variance <- var(complete_data$market_excess_returns, na.rm = TRUE)
+  asset_beta <- asset_covariance / market_variance
+
+  return(c(asset_mean, asset_sd, asset_skewness, asset_kurtosis, asset_beta))
+}
+
+# Calculate the statistics for the market index
+market_statistics <- get_sample_statistics(combined_returns$SP500)
+paste0("Market annualised summary statistics = (mean, sd, skewness, kurtosis, beta) = "); market_statistics
+
+
+asset_excess_returns <- excess_returns[, 2:(ncol(excess_returns) - 1)]
+# Calculate the statistics for the assets
+asset_returns<-combined_returns[,2:16]
+statistics_list <- lapply(asset_returns, get_sample_statistics)
+
+statistics_df <- data.frame(matrix(unlist(statistics_list), nrow = 5, byrow = FALSE))
+rownames(statistics_df) <- c("Annual Mean", "Annual SD", "Skewness", "Kurtosis", "Beta")
+colnames(statistics_df) <- tickers
+
+# Add the market statistics to the data frame
+statistics_df <- cbind(statistics_df, data.frame(market_statistics))
+colnames(statistics_df)[ncol(statistics_df)] <- "Market"
+
+head(statistics_df)
+
+```
+
+- Summary Stat Plots: 
+```{r}
+get_summary_plots<- function(asset_returns, asset_name){
+  h<-hist(asset_returns, main = paste0("Histogram for ", asset_name))
+  b<-boxplot(asset_returns, main = paste0("Boxplot for ", asset_name))
+  qq<-qqnorm(asset_returns, main = paste0("QQ-plot for ", asset_name))
+}
+
+mapply(get_summary_plots, asset_returns, tickers)
+```
+
+- You should also provide an equity curve for each asset (that is, a curve that shows the growth of a $1 in each of the asset over the time period you chose). You should do the same for S&P 500 and compare it with the assets. [Get S&P 500 data from yfinance also]
+```{r}
+# Calculate cumulative returns for each asset and the S&P 500
+cumulative_returns <- function(asset_returns) {
+  cum_returns <- cumprod(1 + asset_returns) - 1
+  return(cum_returns)
+}
+
+equity_curves <- lapply(asset_returns, cumulative_returns)
+
+# Add the S&P 500 equity curve
+sp500_returns <- sp500_returns_df$SP500
+sp500_equity_curve <- cumulative_returns(sp500_returns)
+
+# Plot the equity curves
+par(mfrow = c(4, 4), mar = c(4, 4, 2, 1))
+
+for (i in 1:length(tickers)) {
+  plot(equity_curves[[i]], main = paste(tickers[i], "Equity Curve"), ylab = "Cumulative Return", xlab = "Date", type = "l")
+}
+
+# Plot the S&P 500 equity curve
+plot(sp500_equity_curve, main = "S&P 500 Equity Curve", ylab = "Cumulative Return", xlab = "Date", type = "l")
+
+
+```
+
+- Run a test for stationarity.
+
+```{r}
+library(tseries)
+
+# Consider differencing? Some of these do it automatically... 
+p_vals_adf<-c()
+number<-ncol(combined_returns)-1
+for(i in 2:number){
+  col<-colnames(combined_returns)[i]
+  slice<-combined_returns[colnames(combined_returns)==col]
+  tesT<-adf.test(slice[[1]], alternative="stationary")
+  p_vals_adf[i]<-tesT$p.value
+}
+p_vals_adf # Small p-values means rejecting H_0 in favour of H_a that series are all stationary 
+
+
+p_vals_kpss<-c()
+for(i in 2:number){
+  col<-colnames(combined_returns)[i]
+  slice<-combined_returns[colnames(combined_returns)==col]
+  tesT<-kpss.test(slice[[1]], null="Level")
+  p_vals_kpss[i]<-tesT$p.value
+}
+p_vals_kpss # Big p-values means keeping H_0 that series are trend stationary [look into 6th asset - Tesla]
+
+# Both tests conclude that stationary ?
+
+```
+
+
+- Do the returns look normally distributed ? 
+```{r}
+library("nortest")
+p_vals_lillie<-c()
+for(i in 2:number){
+  col<-colnames(combined_returns)[i]
+  slice<-combined_returns[colnames(combined_returns)==col]
+  tesT<-lillie.test(slice[[1]])
+  p_vals_lillie[i]<-tesT$p.value
+}
+p_vals_lillie # H_0 is that data is normal so if smaller than threshold p-value, look into that asset being differently distributed 
+```
+
+- Compute Sharpe’s slope for each asset. Which asset has the highest slope? 
+```{r}
+# Calculate Sharpe's slope for each asset
+# Note (!) using montlhy excess returns
+sharpe_slope <- sapply(asset_excess_returns, function(x) mean(x, na.rm = TRUE) / sd(x, na.rm = TRUE))
+
+# Print Sharpe's slope for each asset
+sharpe_slope
+
+# Find the asset with the highest Sharpe's slope
+highest_sharpe_slope <- tickers[which.max(sharpe_slope)]
+highest_sharpe_slope
+
+```
+- Are there any outliers in the data? [Test for this... ]
+```{r}
+library(tsoutliers)
+
+outliers_list <- list()
+total_outliers <- list()
+
+for (i in 1:length(tickers)) {
+  asset_ts <- ts(asset_returns[, i], start = c(2015, 1), frequency = 12)
+  outliers_list[[tickers[i]]] <- tso(asset_ts, maxit = 100)
+  total_outliers[[tickers[i]]] <- length(outliers_list[[tickers[i]]]$outliers$ind)
+  
+  # Extract the index values of the identified outliers for the current asset
+  outlier_indices <- outliers_list[[tickers[i]]]$outliers$ind
+  
+  # Create a plot of the current asset's returns and mark the outlier points in red
+  plot(x=1:length(asset_ts), y=asset_ts, main = tickers[i],type = 'l', ylab = "Returns", xlab = "Time")
+  points(x=outlier_indices, y=asset_ts[outlier_indices], col = "red")
+}
+
+# Print the total number of outliers for each asset's time series
+total_outliers_df <- data.frame(matrix(unlist(total_outliers), nrow = 1, byrow = FALSE))
+colnames(total_outliers_df) <- c(tickers)
+rownames(total_outliers_df) <- c("Total Outliers")
+
+total_outliers_df
+# By default: "AO" additive outliers, "LS" level shifts, and "TC" temporary changes are selected above ...
+
+# 1) Additive outliers: observations significantly larger or smaller than the surrounding data points. Usually caused by random events or measurement errors.
+
+# 2) Level shifts: abrupt changes in the level of the time series that persist over time. Often caused by sudden changes in the underlying process that generates the data.
+
+# 3) Temporary changes are sudden, but short-lived changes in the level of the time series. Often caused by transient events that have a temporary impact on the underlying process. 
+```
+- Construct pairwise scatter plots between your assets returns and comment on
+any relationships you see.
+- Compute the sample covariance matrix of the returns on your assets and comment on the direction of linear association between the asset returns.
+- Which assets are most highly correlated? Which are least correlated? 
+- Based on the estimated correlation values do you think diversification will reduce risk with these assets?
+```{r}
+# Pairwise scatter plots
+pairs(asset_returns, 
+      main = "Pairwise Scatter Plots of Asset Returns",
+      lower.panel = NULL)
+
+# Compute the sample covariance matrix
+cov_matrix <- cov(asset_returns, use = "complete.obs")
+
+# Print the covariance matrix
+cov_matrix
+
+# Compute the correlation matrix
+cor_matrix <- cor(asset_returns, use = "complete.obs")
+
+# Print the correlation matrix
+cor_matrix
+
+
+library(gplots)
+
+# Plot the heatmap
+heatmap(cor_matrix, 
+        symm = TRUE, 
+        margins = c(5, 5),
+        main = "Correlation Matrix of Asset Returns",
+        xlab = "Asset Tickers", 
+        ylab = "Asset Tickers",
+        Colv = NA, Rowv = NA)
+
+
+library(caret)
+
+# Identify strongly correlated pairs (correlation coefficient > 0.6)
+highly_correlated_pairs <- findCorrelation(cor_matrix, cutoff = 0.6, verbose = TRUE)
+
+```
+
+- Run the PCA analysis and comment on your results. [Professor mentioned to aim for 7-8 assets with 90% cumilative explained variance]
+```{r}
+library(stats)
+asset_returns_standardized <- scale(asset_returns)
+pca_results <- prcomp(asset_returns_standardized, center = FALSE, scale. = FALSE)
+# Print a summary of the PCA results
+summary(pca_results)
+
+# Get the principal components
+principal_components <- pca_results$x
+
+# Get the loadings (eigenvectors)
+loadings <- pca_results$rotation
+
+# Get the proportion of variance explained by each principal component
+variance_proportion <- pca_results$sdev^2 / sum(pca_results$sdev^2)
+
+# Get the cumulative proportion of variance explained by the principal components
+cumulative_variance_proportion <- cumsum(variance_proportion)
+
+# Print the proportion of variance explained by each principal component
+cat("Proportion of variance explained by each principal component:\n")
+print(variance_proportion)
+
+# Print the cumulative proportion of variance explained by the principal components
+cat("Cumulative proportion of variance explained by the principal components:\n")
+print(cumulative_variance_proportion)
+
+# Find the number of components that explain at least 90% of the variance
+num_components <- which(cumulative_variance_proportion >= 0.9)[1]
+# Need 9 components for 90%...
+
+# Select the first N principal components
+selected_principal_components <- pca_results$x[, 1:num_components]
+
+# Generate the reduced dataset
+reduced_dataset <- selected_principal_components %*% t(pca_results$rotation[, 1:num_components])
+
+# Add the column means back to the reduced dataset to reverse the centering
+reduced_dataset <- sweep(reduced_dataset, 2, colMeans(asset_returns), "+")
+
+# The reduced_dataset now contains your original data projected onto the first N principal components, which explain at least 90% of the variance.
+
+```
+
+- Run factor analysis and report the number and the loadings of each factors. Do they have any meaningful interpretation?
+- Code below needs fixing... 
+```{r}
+# Run CAPM first then write version for 3 and 5 factors, also include Fama-French model? 
+
+
+# Run factor analysis
+factor_results <- factanal(cor_matrix, factors = 3, rotation = "varimax")
+
+# Report the number of factors
+cat("Number of factors:", dim(factor_results$loadings)[2], "\n")
+
+# Report the factor loadings
+cat("Factor loadings:\n")
+print(factor_results$loadings)
+
+# CAPM
+CAPM <- lm(as.matrix(stocks_diff) ~ FF_data$Mkt.RF)
+summary(CAPM)
+
+# Fama-French 3-factor model
+FF3 <- lm(as.matrix(stocks_diff) ~ FF_data$Mkt.RF + FF_data$SMB + FF_data$HML)
+summary(FF3)
+```
+- Fit different distributions to your data, which one fits better? 
+
+```{r}
+library(MASS)
+library(fGarch)
+
+
+n = ncol(data)-2
+for (i in 1:n) {
+  data_col = data[[i]]
+  log_likelihood_sstd = function(x){
+    return(-sum(dsstd(data_col, x[1], x[2], x[3], x[4], log = TRUE)))
+  }
+  log_likelihood_ged = function(beta){
+    return(-sum(dged(data_col, mean = beta[1], sd = beta[2], nu = beta[3], log = TRUE)))
+  }
+  model_normal <- fitdistr(data[[i]], "normal")
+  initial = c(mean(data[[i]]), sd(data[[i]]), length(data[[i]]), 1)
+  model_sstd = optim(start, log_likelihood_sstd)
+  neg_log_likelihood_sstd = model_sstd$value
+  sstd_AIC = 2*neg_log_likelihood_sstd+2*length(model_sstd$par)
+  sstd_BIC = 2*neg_log_likelihood_sstd+log(length(data[[i]]))*length(model_sstd$par)
+  
+  initial = c(mean(data[[i]]), sd(data[[i]]), 1)
+  model_ged = optim(start, log_likelihood_ged)
+  neg_log_likelihood_ged = model_ged$value
+  ged_AIC = 2*neg_log_likelihood_ged+2*length(model_ged$par)
+  ged_BIC = 2*neg_log_likelihood_ged+log(length(data[[i]]))*length(model_ged$par)
+  
+  norm_AIC <- AIC(model_normal)
+  norm_BIC <- BIC(model_normal)
+  AIC <- c(norm_AIC,sstd_AIC,ged_AIC)
+  BIC <- c(norm_BIC,sstd_BIC,ged_BIC)
+  names(AIC) <- c("normal","sstd","ged")
+  names(BIC) <- c("normal","sstd","ged")
+  best_model_AIC <- c(model_normal, model_sstd, model_ged)[which.min(AIC)]
+  best_model_BIC <- c(model_normal, model_sstd, model_ged)[which.min(BIC)]
+  best_AIC <- which.min(AIC)
+  best_BIC <- which.min(BIC)
+  
+  optimal_models_AIC_wise[[i]] <- list(AIC, best_AIC, best_model_AIC)
+  optimal_models_BIC_wise[[i]] <- list(BIC, best_BIC, best_model_BIC)
+  
+}
+```
+
+
+ - Ask professor if can focus on assets that fail normality check only and fit normal dist. with sample(mean) and sample(sd) for the ones that should be normal? 
+ 
+- Use copulas to to model the joint distribution of the returns. Which copula fits better the data? What are the implications? 
+
+- Use selected Copula to calculate portfolio VaR and ES for final selected portfolio... [Extra]

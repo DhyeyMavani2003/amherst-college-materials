@@ -1,0 +1,3 @@
+"0",""
+"0","# Plotting all the stock tickers on the Reward-Risk space"
+"0","text(sd_vect[1],mean_vect[1],""GM"")"

@@ -1,0 +1,12 @@
+"0","norm.GM <- fitdist(data$GM, ""norm"") # Normal"
+"2","Warning: NaNs produced"
+"2","Warning: NaNs produced"
+"0","summary(norm.GM)"
+"1","Fitting of the distribution '"
+"1"," "
+"1","norm"
+"1"," "
+"1","' by maximum likelihood 
+"
+"1","Parameters : 
+"

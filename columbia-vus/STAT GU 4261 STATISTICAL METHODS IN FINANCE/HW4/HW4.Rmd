@@ -1,0 +1,143 @@
+```{r}
+# read the data
+dat = read.csv("Stock_Bond.csv", header = T)
+# create a prices data frame
+prices = cbind(dat$GM_AC, dat$F_AC, dat$CAT_AC, 
+               dat$UTX_AC,dat$MRK_AC, dat$IBM_AC)
+# number of rows in prices
+n = dim(prices)[1]
+# calculating returns into a returns array
+returns =  100 * (prices[2:n, ] / prices[1:(n-1), ] - 1)
+# visualizing ggpairs for returns
+pairs(returns)
+# means of returns stock-wise
+mean_vect = colMeans(returns)
+# stock-wise covariance of returns
+cov_mat = cov(returns)
+# standard deviations of returns stock-wise
+sd_vect = sqrt(diag(cov_mat))
+
+cat("Mean vector is: \n")
+print(mean_vect)
+cat("\n Covriance Matrix is: \n")
+print(cov_mat)
+cat("\n Standard Deviations vector is: \n")
+print(sd_vect)
+```
+
+
+```{r Problem 1}
+# importing the quadprog library
+library(quadprog)
+# getting the number of tickers in consideration
+n_tickers = length(returns[1, ])
+# initializing daily risk free rate
+mu_rf = 3/365
+
+# Using solve.QP for solving QP problems of the form:
+# min(-d^Tb + (1/2)b^TDb) with constraints A^Tb >= b_0
+
+# creating matrix A
+A = cbind(rep(1, n_tickers),
+          mean_vect,
+          diag(1,nrow = n_tickers),
+          diag(-1, nrow = n_tickers))
+# creating muP
+muP = seq(0.04, 0.08, length=400)
+# creating sdP
+sdP = muP
+
+# initializing format of the weights matrix
+weights = matrix(0,
+                 nrow = 400,
+                 ncol = n_tickers)
+
+# solving the QP for each value 
+for (i in 1:length(muP)) {
+  # solving QP
+  result = solve.QP(Dmat = cov_mat,
+                    dvec = rep(0, n_tickers),
+                    Amat = A,
+                    c(1,
+                      muP[i],
+                      rep(-0.1, n_tickers),
+                      rep(-0.5, n_tickers)),
+                    meq = 2)
+  # storing standard deviation
+  sdP[i] = sqrt(2 * result$value)
+  # storing the weights
+  weights[i,] = result$solution
+}
+
+# plot the general standard deviation vs returns curve
+plot(sdP, 
+     muP, 
+     type="l",
+     xlim=c(0,2.5),
+     ylim=c(0,0.1))
+
+# risk free rate plotting
+points(0, mu_rf, col = "green")
+
+# Plotting all the stock tickers on the Reward-Risk space
+text(sd_vect[1],mean_vect[1],"GM")
+text(sd_vect[2],mean_vect[2],"F")
+text(sd_vect[3],mean_vect[3],"UTX")
+text(sd_vect[4],mean_vect[4],"CAT")
+text(sd_vect[5],mean_vect[5],"MRK")
+text(sd_vect[6],mean_vect[6],"IBM")
+
+# calculating sharpe ratio 
+sharpe = (muP - mu_rf)/sdP
+# locating tangency portfolio where the maximum sharpe ratio is achieved
+tangency_location = (sharpe == max(sharpe))
+# outputting the weights of the tangency portfolio
+cat("Weights of the tangency portfolio are: \n")
+weights[tangency_location,]
+# plotting the efficient portfolios line
+lines(c(0, sdP[tangency_location]),
+      c(mu_rf, muP[tangency_location]),
+      col="darkgray",
+      lwd=3)
+# plotting the location of the tangency portfolio
+points(sdP[tangency_location],
+       muP[tangency_location],
+       col="blue")
+
+# locating minimum variance portfolio where minimum sd is achieved 
+min_var_location = (sdP == min(sdP))
+# plotting the location of the minimum variance portfolio
+points(sdP[min_var_location],
+       muP[min_var_location],
+       col="red")
+
+# locating the efficient frontier 
+# where return is greater than that of the minimum variance portfolio
+efficient_frontier_location = (muP > muP[min_var_location])
+# plotting the efficient frontier
+lines(sdP[efficient_frontier_location],
+      muP[efficient_frontier_location],
+      col="cyan")
+```
+
+
+
+```{r}
+# calculating the weight to be assigned to the risk free asset
+w = (0.07 - muP[tangency_location]) / (mu_rf - muP[tangency_location])
+
+cat("Weight to be assigned to the givenrisk free asset is: \n") 
+print(w)
+
+cat("Weight to be assigned to the tangency portfolio as calculated with boundaries in Problem 1: \n")
+print(1-w)
+
+cat("Weights to be assigned to tickers GM, F, UTX, CAT, MRK, IBM respectively are: \n")
+print((1-w)*weights[tangency_location])
+```
+
+```{r}
+returns[201,]
+```
+
+

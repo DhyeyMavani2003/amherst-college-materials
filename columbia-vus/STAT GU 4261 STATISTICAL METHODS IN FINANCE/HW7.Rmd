@@ -1,0 +1,72 @@
+```{r}
+library(copula)
+cop_t_dim3 = tCopula(dim = 3,
+                     param = c(-0.6,0.75,0),
+                     dispstr = "un",
+                     df = 1)
+set.seed(5640)
+rand_t_cop = rCopula(n = 500, copula = cop_t_dim3)
+pairs(rand_t_cop)
+cor(rand_t_cop)
+```
+
+```{r}
+cor.test(rand_t_cop[,1],rand_t_cop[,3])
+```
+
+```{r}
+cop_normal_dim3 = normalCopula(dim = 3, param = c(-0.6,0.75,0),
+                               dispstr = "un")
+mvdc_normal = mvdc(copula = cop_normal_dim3, margins = rep("exp",3),
+                   paramMargins = list(list(rate=2), list(rate=3),
+                                       list(rate=4)))
+set.seed(5640)
+rand_mvdc = rMvdc(n = 1000, mvdc = mvdc_normal)
+pairs(rand_mvdc)
+par(mfrow = c(2,2))
+for(i in 1:3) plot(density(rand_mvdc[,i]))
+```
+
+```{r}
+data <- readxl::read_excel("CAPM-DATA-1.xlsx")
+needed_data <- data[,2:3]
+n <- nrow(needed_data)
+updated_data <- cbind(rank(needed_data[,1])/(n+1), rank(needed_data[,2])/(n+1))
+normal_copula = normalCopula(param = 0, dim = 2, dispstr = "un")
+normal_fit = fitCopula(data = updated_data, copula = normal_copula, method = "ml")
+normal_fit
+```
+
+```{r}
+t_copula = tCopula(param = 0, dim = 2, dispstr = "un", df = 5)
+t_fit = fitCopula(data = updated_data, copula = t_copula, method = "ml")
+t_fit
+```
+
+```{r}
+clayton_copula = archmCopula(family = "clayton", dim = 2, param = 2)
+clayton_fit = fitCopula(data = updated_data, copula = clayton_copula, method = "ml")
+clayton_fit
+```
+
+```{r}
+gumbel_copula = archmCopula(family = "gumbel", dim = 2, param = 2)
+gumbel_fit = fitCopula(data = updated_data, copula = gumbel_copula, method = "ml")
+gumbel_fit
+```
+
+```{r}
+# Finding Minimum by AIC measure
+which.min(c(AIC(normal_fit),
+            AIC(t_fit),
+            AIC(clayton_fit),
+            AIC(gumbel_fit)))
+```
+
+```{r}
+# Finding Minimum by BIC measure
+which.min(c(BIC(normal_fit),
+            BIC(t_fit),
+            BIC(clayton_fit),
+            BIC(gumbel_fit)))
+```

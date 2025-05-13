@@ -1,0 +1,54 @@
+```{r}
+school1 = scan("http://www2.stat.duke.edu/~pdh10/FCBS/Exercises/school1.dat") 
+school2 = scan("http://www2.stat.duke.edu/~pdh10/FCBS/Exercises/school2.dat") 
+school3 = scan("http://www2.stat.duke.edu/~pdh10/FCBS/Exercises/school3.dat") 
+```
+
+```{r}
+mean(school1)
+mean(school2)
+mean(school3)
+```
+
+```{r}
+sd(school1)
+sd(school2)
+sd(school3)
+```
+
+```{r}
+posterior_params_gen <- function(data) {
+  # prior
+  mu0 <- 5
+  k0 <- 1 
+  s20 <- 4
+  nu0 <- 2
+  # data
+  y <- data
+  n <- length (y)
+  ybar <- mean(y)
+  s2 <- var(y)
+  # posterior inference
+  kn <- k0 + n
+  nun <- nu0 + n
+  mun <- (k0*mu0 + n*ybar)/kn
+  s2n <- (nu0*s20 +(n-1)*s2 +k0*n*(ybar - mu0)^2/(kn))/(nun)
+  
+  s2.postsample <- 1/rgamma(10000 , nun/2 , s2n*nun/2 )
+  theta.postsample <- rnorm(10000, mun, sqrt(s2.postsample/kn))
+  
+  cat("Posterior mean is \n")
+  print(mun)
+  cat("95% CI for the posterior mean is \n")
+  print(quantile(theta.postsample,c(.025,.975)))
+  cat("Posterior standard deviation is \n")
+  print(sqrt(s2n))
+  cat("95% CI for the posterior standard deviation is \n")
+  print(quantile(s2.postsample,c(.025,.975)))
+}
+
+posterior_params_gen(school1)
+posterior_params_gen(school2)
+posterior_params_gen(school3)
+
+```

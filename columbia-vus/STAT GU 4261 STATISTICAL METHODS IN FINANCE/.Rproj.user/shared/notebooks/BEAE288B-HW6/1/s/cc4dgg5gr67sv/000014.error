@@ -1,0 +1,1 @@
+{"frames":[{"func":"optim(start, log_likelihood_sstd)","file":"","line_number":0,"end_line_number":0,"character_number":0,"end_character_number":0}],"message":"Error in optim(start, log_likelihood_sstd) : \n  cannot coerce type 'closure' to vector of type 'double'\n"}

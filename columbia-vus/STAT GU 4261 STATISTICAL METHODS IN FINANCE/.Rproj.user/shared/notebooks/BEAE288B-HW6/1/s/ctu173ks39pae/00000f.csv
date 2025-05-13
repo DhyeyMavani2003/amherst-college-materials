@@ -1,0 +1,12 @@
+"0","norm.MSOFT <- fitdist(data$MSOFT, ""norm"") # Normal"
+"2","Warning: NaNs produced"
+"2","Warning: NaNs produced"
+"0","summary(norm.MSOFT)"
+"1","Fitting of the distribution '"
+"1"," "
+"1","norm"
+"1"," "
+"1","' by maximum likelihood 
+"
+"1","Parameters : 
+"

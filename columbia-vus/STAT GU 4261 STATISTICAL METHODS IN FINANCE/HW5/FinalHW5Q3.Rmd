@@ -1,0 +1,12 @@
+```{r}
+# install.packages("readxl")
+library(readxl)
+
+data <- read_excel("CAPM-DATA-1.xlsx")
+
+data
+```
+
+```{r}
+
+```

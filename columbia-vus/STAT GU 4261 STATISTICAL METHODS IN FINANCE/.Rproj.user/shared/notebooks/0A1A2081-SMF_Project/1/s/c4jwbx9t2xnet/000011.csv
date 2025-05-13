@@ -1,0 +1,6 @@
+"0","library(quantmod)"
+"0","library(dplyr)"
+"2","Warning: package ‘dplyr’ was built under R version 4.1.2"
+"2","Error: package or namespace load failed for ‘dplyr’ in loadNamespace(i, c(lib.loc, .libPaths()), versionCheck = vI[[i]]):
+ namespace ‘rlang’ 0.4.12 is already loaded, but >= 1.1.0 is required
+"

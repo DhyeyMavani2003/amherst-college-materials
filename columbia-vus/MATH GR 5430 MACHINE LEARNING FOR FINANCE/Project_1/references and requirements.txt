@@ -1,0 +1,19 @@
+1. https://numpy.org/doc/stable/index.html (Numpy: %s  1.22.4)
+
+2. https://pandas.pydata.org/ (Pandas: %s  1.4.4)
+
+3. https://matplotlib.org/
+
+4. https://pypi.org/project/yfinance/
+
+5. https://scikit-learn.org/stable/
+
+6. https://palomar.home.ece.ust.hk/MAFS5310_lectures/slides_pairs_trading.pdf
+
+7. https://www.macroaxis.com/invest/pair-correlation/V/MA/Visa-vs-Mastercard
+
+8. https://www.palmislandtraders.com/econ136/e136lit.htm
+
+9. https://medium.com/@mikayil.majidov/pairs-trading-python-template-strategy-review-e22e8def539
+
+10. https://medium.com/auquan/pairs-trading-data-science-7dbedafcfe5a

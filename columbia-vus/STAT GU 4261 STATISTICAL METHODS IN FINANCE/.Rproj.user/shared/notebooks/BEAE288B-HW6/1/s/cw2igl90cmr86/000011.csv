@@ -1,0 +1,6 @@
+"0","# install.packages(""readxl"")"
+"0","library(readxl)"
+"0",""
+"0","data <- read_excel(""CAPM-DATA-1.xlsx"")"
+"0",""
+"0","data"

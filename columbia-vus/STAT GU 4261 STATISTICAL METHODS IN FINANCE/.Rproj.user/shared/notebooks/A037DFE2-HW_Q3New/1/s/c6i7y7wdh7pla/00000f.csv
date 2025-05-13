@@ -1,0 +1,5 @@
+"0","data <- as.matrix(data)"
+"0","risk_free_asset = data[,6]"
+"0","excess_returns = data[,1:5] - risk_free_asset"
+"0","market_excess_returns = excess_returns[,5]"
+"0","stocks_excess_returns = excess_returns[,1:4]"

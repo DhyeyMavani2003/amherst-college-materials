@@ -1,0 +1,1 @@
+"0","boxcox(male.earnings ~ 1, lambda = seq(0.3, 0.45, 1 / 100))"

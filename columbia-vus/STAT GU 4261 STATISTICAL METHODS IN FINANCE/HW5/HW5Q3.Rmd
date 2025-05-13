@@ -1,0 +1,72 @@
+```{r}
+# install.packages("readxl")
+library(readxl)
+
+data <- read_excel("CAPM-DATA-1.xlsx")
+
+data
+```
+
+```{r}
+data <- as.matrix(data)
+risk_free_asset = data[,6]
+excess_returns = data[,1:5] - risk_free_asset
+market_excess_returns = excess_returns[,5]
+stocks_excess_returns = excess_returns[,1:4]
+```
+
+```{r}
+lm_1 <- lm(stocks_excess_returns[,1] ~ market_excess_returns)
+summary(lm_1)
+lm_2 <- lm(stocks_excess_returns[,2] ~ market_excess_returns)
+summary(lm_2)
+lm_3 <- lm(stocks_excess_returns[,3] ~ market_excess_returns)
+summary(lm_3)
+lm_4 <- lm(stocks_excess_returns[,4] ~ market_excess_returns)
+summary(lm_4)
+```
+
+```{r part (a)}
+N = nrow(data)
+Y <- c(stocks_excess_returns)
+X <- matrix(0, N*4, 4)
+X[1:N, 1] = market_excess_returns
+X[(N+1):(2*N), 2] = market_excess_returns
+X[(2*N+1):(3*N), 3] = market_excess_returns
+X[(3*N+1):(4*N), 4] = market_excess_returns
+capm_model = lm(Y ~ X)
+capm_model
+```
+
+```{r part (b)}
+summary(capm_model)
+print("P value for alpha is 0.35, which is way greater than 0.05 or 0.1 for that matter. So it seems that we cannot reject the null hypothesis of alpha = 0, and thus what finance theory suggests.")
+```
+
+```{r part (c)}
+confint(capm_model, 2:5)
+```
+
+```{r part (d)}
+beta_hyp_test_model <- lm(I(Y - rep(market_excess_returns, 4)) ~ 1)
+
+F_test_stats_generator = function(model1, model2) {
+  SSE_R = sum(resid(model1)^2)
+  SSE_F = sum(resid(model2)^2)
+  df_num = model1$df - model2$df
+  df_den = model2$df
+  F_score = ((SSE_R - SSE_F)/df_num)/(SSE_F/df_den)
+  p_val = 1- pf(F_score, df_num, df_den)
+  return (data.frame(F_score, df_num, df_den, p_val))
+}
+
+F_test_stats_generator(beta_hyp_test_model, capm_model)
+
+print("All the null hypotheses are rejected at 5% significance level as we can see that all the p-values are less than 0.05")
+```      
+
+```{r part (e)}
+beta_microsoft_hyp_test_model <- lm(I(Y - X[,1]) ~ X)
+summary(beta_microsoft_hyp_test_model)
+print("One sided p value for Microsoft is 0.00352/2 = 0.0018. Reject the null hypothesis that Microsoft has beta equal to 1")
+```

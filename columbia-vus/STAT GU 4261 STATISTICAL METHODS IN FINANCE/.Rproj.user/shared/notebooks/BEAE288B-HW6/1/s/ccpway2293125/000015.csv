@@ -1,0 +1,3 @@
+"0","library(""MASS"")"
+"0","par(mfrow = c(1, 1))"
+"0","boxcox(male.earnings ~ 1)"

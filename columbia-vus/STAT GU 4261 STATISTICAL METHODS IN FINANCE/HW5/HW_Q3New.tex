@@ -1,0 +1,484 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# install.packages("readxl")}
+\FunctionTok{library}\NormalTok{(readxl)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'readxl' was built under R version 4.1.2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{read\_excel}\NormalTok{(}\StringTok{"CAPM{-}DATA{-}1.xlsx"}\NormalTok{)}
+
+\NormalTok{data}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 120 x 6
+##       MSOFT       GE       GM     IBM    MPORT  RFREE
+##       <dbl>    <dbl>    <dbl>   <dbl>    <dbl>  <dbl>
+##  1 -0.0286   0.0098  -0.0772  -0.0187  0.0204  0.0042
+##  2  0.0610   0.0631   0.102    0.0468  0.0396  0.004 
+##  3  0.129   -0.00621  0.0323   0.0914  0.0270  0.0046
+##  4  0.149    0.0370   0.0256   0.152   0.0250  0.0044
+##  5  0.0359   0.0357   0.0704  -0.0145  0.0340  0.0054
+##  6  0.0672  -0.0210  -0.0234   0.0323  0.0312  0.0047
+##  7  0.00138  0.0466   0.04     0.134   0.0408  0.0045
+##  8  0.0221  -0.00212 -0.0272  -0.0482  0.00931 0.0047
+##  9 -0.0216   0.0898  -0.00531 -0.0858  0.0364  0.0043
+## 10  0.105   -0.00784 -0.0667   0.0291 -0.0113  0.0047
+## # ... with 110 more rows
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{as.matrix}\NormalTok{(data)}
+\NormalTok{risk\_free\_asset }\OtherTok{=}\NormalTok{ data[,}\DecValTok{6}\NormalTok{]}
+\NormalTok{excess\_returns }\OtherTok{=}\NormalTok{ data[,}\DecValTok{1}\SpecialCharTok{:}\DecValTok{5}\NormalTok{] }\SpecialCharTok{{-}}\NormalTok{ risk\_free\_asset}
+\NormalTok{market\_excess\_returns }\OtherTok{=}\NormalTok{ excess\_returns[,}\DecValTok{5}\NormalTok{]}
+\NormalTok{stocks\_excess\_returns }\OtherTok{=}\NormalTok{ excess\_returns[,}\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# for (a) we can look at the coefficients of the explanatory variable}
+\CommentTok{\# for (b) we cna look at the coefficients and stats of the intercept}
+\NormalTok{lm\_1 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(stocks\_excess\_returns[,}\DecValTok{1}\NormalTok{] }\SpecialCharTok{\textasciitilde{}}\NormalTok{ market\_excess\_returns)}
+\FunctionTok{summary}\NormalTok{(lm\_1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = stocks_excess_returns[, 1] ~ market_excess_returns)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.28112 -0.05494 -0.00580  0.04319  0.34337 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)           0.010192   0.008819   1.156     0.25    
+## market_excess_returns 1.429866   0.188159   7.599  7.8e-12 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.09542 on 118 degrees of freedom
+## Multiple R-squared:  0.3286, Adjusted R-squared:  0.3229 
+## F-statistic: 57.75 on 1 and 118 DF,  p-value: 7.799e-12
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm\_2 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(stocks\_excess\_returns[,}\DecValTok{2}\NormalTok{] }\SpecialCharTok{\textasciitilde{}}\NormalTok{ market\_excess\_returns)}
+\FunctionTok{summary}\NormalTok{(lm\_2)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = stocks_excess_returns[, 2] ~ market_excess_returns)
+## 
+## Residuals:
+##       Min        1Q    Median        3Q       Max 
+## -0.114633 -0.033966 -0.001445  0.037915  0.182273 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)           0.005886   0.004908   1.199    0.233    
+## market_excess_returns 0.983041   0.104718   9.388 5.65e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.05311 on 118 degrees of freedom
+## Multiple R-squared:  0.4275, Adjusted R-squared:  0.4227 
+## F-statistic: 88.13 on 1 and 118 DF,  p-value: 5.65e-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm\_3 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(stocks\_excess\_returns[,}\DecValTok{3}\NormalTok{] }\SpecialCharTok{\textasciitilde{}}\NormalTok{ market\_excess\_returns)}
+\FunctionTok{summary}\NormalTok{(lm\_3)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = stocks_excess_returns[, 3] ~ market_excess_returns)
+## 
+## Residuals:
+##       Min        1Q    Median        3Q       Max 
+## -0.230794 -0.041190 -0.006428  0.035515  0.215521 
+## 
+## Coefficients:
+##                        Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)           -0.002314   0.007301  -0.317    0.752    
+## market_excess_returns  1.074415   0.155765   6.898  2.8e-10 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.079 on 118 degrees of freedom
+## Multiple R-squared:  0.2873, Adjusted R-squared:  0.2813 
+## F-statistic: 47.58 on 1 and 118 DF,  p-value: 2.8e-10
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm\_4 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(stocks\_excess\_returns[,}\DecValTok{4}\NormalTok{] }\SpecialCharTok{\textasciitilde{}}\NormalTok{ market\_excess\_returns)}
+\FunctionTok{summary}\NormalTok{(lm\_4)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = stocks_excess_returns[, 4] ~ market_excess_returns)
+## 
+## Residuals:
+##       Min        1Q    Median        3Q       Max 
+## -0.272521 -0.050467 -0.009385  0.043036  0.262101 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)           0.006849   0.007285    0.94    0.349    
+## market_excess_returns 1.268299   0.155431    8.16 4.13e-13 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.07883 on 118 degrees of freedom
+## Multiple R-squared:  0.3607, Adjusted R-squared:  0.3553 
+## F-statistic: 66.58 on 1 and 118 DF,  p-value: 4.129e-13
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(lm\_1, }\DecValTok{2}\SpecialCharTok{:}\DecValTok{5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                          2.5 %   97.5 %
+## market_excess_returns 1.057261 1.802472
+## <NA>                        NA       NA
+## <NA>                        NA       NA
+## <NA>                        NA       NA
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(lm\_2, }\DecValTok{2}\SpecialCharTok{:}\DecValTok{5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                           2.5 %  97.5 %
+## market_excess_returns 0.7756721 1.19041
+## <NA>                         NA      NA
+## <NA>                         NA      NA
+## <NA>                         NA      NA
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(lm\_3, }\DecValTok{2}\SpecialCharTok{:}\DecValTok{5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                           2.5 %   97.5 %
+## market_excess_returns 0.7659588 1.382872
+## <NA>                         NA       NA
+## <NA>                         NA       NA
+## <NA>                         NA       NA
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(lm\_4, }\DecValTok{2}\SpecialCharTok{:}\DecValTok{5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##                           2.5 %   97.5 %
+## market_excess_returns 0.9605042 1.576094
+## <NA>                         NA       NA
+## <NA>                         NA       NA
+## <NA>                         NA       NA
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compute the t{-}statistic}
+\NormalTok{t\_stat }\OtherTok{\textless{}{-}}\NormalTok{ (}\FunctionTok{coef}\NormalTok{(lm\_1)[}\StringTok{"market\_excess\_returns"}\NormalTok{] }\SpecialCharTok{{-}} \DecValTok{1}\NormalTok{) }\SpecialCharTok{/} \FunctionTok{summary}\NormalTok{(lm\_1)}\SpecialCharTok{$}\NormalTok{coef[}\StringTok{"market\_excess\_returns"}\NormalTok{, }\StringTok{"Std. Error"}\NormalTok{]}
+
+\CommentTok{\# Obtain the p{-}value associated with the t{-}statistic}
+\NormalTok{p\_value }\OtherTok{\textless{}{-}} \DecValTok{2} \SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{pt}\NormalTok{(}\FunctionTok{abs}\NormalTok{(t\_stat), }\DecValTok{2}\NormalTok{))}
+\NormalTok{p\_value}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## market_excess_returns 
+##             0.1497248
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compare p{-}value to chosen level of significance (e.g., 0.05)}
+\ControlFlowTok{if}\NormalTok{ (p\_value }\SpecialCharTok{\textless{}} \FloatTok{0.05}\NormalTok{) \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Reject null hypothesis: slope coefficient is not equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\} }\ControlFlowTok{else}\NormalTok{ \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Fail to reject null hypothesis: slope coefficient is equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Fail to reject null hypothesis: slope coefficient is equal to 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compute the t{-}statistic}
+\NormalTok{t\_stat }\OtherTok{\textless{}{-}}\NormalTok{ (}\FunctionTok{coef}\NormalTok{(lm\_2)[}\StringTok{"market\_excess\_returns"}\NormalTok{] }\SpecialCharTok{{-}} \DecValTok{1}\NormalTok{) }\SpecialCharTok{/} \FunctionTok{summary}\NormalTok{(lm\_2)}\SpecialCharTok{$}\NormalTok{coef[}\StringTok{"market\_excess\_returns"}\NormalTok{, }\StringTok{"Std. Error"}\NormalTok{]}
+
+\CommentTok{\# Obtain the p{-}value associated with the t{-}statistic}
+\NormalTok{p\_value }\OtherTok{\textless{}{-}} \DecValTok{2} \SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{pt}\NormalTok{(}\FunctionTok{abs}\NormalTok{(t\_stat), }\DecValTok{2}\NormalTok{))}
+\NormalTok{p\_value}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## market_excess_returns 
+##             0.8862293
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compare p{-}value to chosen level of significance (e.g., 0.05)}
+\ControlFlowTok{if}\NormalTok{ (p\_value }\SpecialCharTok{\textless{}} \FloatTok{0.05}\NormalTok{) \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Reject null hypothesis: slope coefficient is not equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\} }\ControlFlowTok{else}\NormalTok{ \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Fail to reject null hypothesis: slope coefficient is equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Fail to reject null hypothesis: slope coefficient is equal to 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compute the t{-}statistic}
+\NormalTok{t\_stat }\OtherTok{\textless{}{-}}\NormalTok{ (}\FunctionTok{coef}\NormalTok{(lm\_3)[}\StringTok{"market\_excess\_returns"}\NormalTok{] }\SpecialCharTok{{-}} \DecValTok{1}\NormalTok{) }\SpecialCharTok{/} \FunctionTok{summary}\NormalTok{(lm\_3)}\SpecialCharTok{$}\NormalTok{coef[}\StringTok{"market\_excess\_returns"}\NormalTok{, }\StringTok{"Std. Error"}\NormalTok{]}
+
+\CommentTok{\# Obtain the p{-}value associated with the t{-}statistic}
+\NormalTok{p\_value }\OtherTok{\textless{}{-}} \DecValTok{2} \SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{pt}\NormalTok{(}\FunctionTok{abs}\NormalTok{(t\_stat), }\DecValTok{2}\NormalTok{))}
+\NormalTok{p\_value}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## market_excess_returns 
+##             0.6799534
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compare p{-}value to chosen level of significance (e.g., 0.05)}
+\ControlFlowTok{if}\NormalTok{ (p\_value }\SpecialCharTok{\textless{}} \FloatTok{0.05}\NormalTok{) \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Reject null hypothesis: slope coefficient is not equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\} }\ControlFlowTok{else}\NormalTok{ \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Fail to reject null hypothesis: slope coefficient is equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Fail to reject null hypothesis: slope coefficient is equal to 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compute the t{-}statistic}
+\NormalTok{t\_stat }\OtherTok{\textless{}{-}}\NormalTok{ (}\FunctionTok{coef}\NormalTok{(lm\_4)[}\StringTok{"market\_excess\_returns"}\NormalTok{] }\SpecialCharTok{{-}} \DecValTok{1}\NormalTok{) }\SpecialCharTok{/} \FunctionTok{summary}\NormalTok{(lm\_4)}\SpecialCharTok{$}\NormalTok{coef[}\StringTok{"market\_excess\_returns"}\NormalTok{, }\StringTok{"Std. Error"}\NormalTok{]}
+
+\CommentTok{\# Obtain the p{-}value associated with the t{-}statistic}
+\NormalTok{p\_value }\OtherTok{\textless{}{-}} \DecValTok{2} \SpecialCharTok{*}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{pt}\NormalTok{(}\FunctionTok{abs}\NormalTok{(t\_stat), }\DecValTok{2}\NormalTok{))}
+\NormalTok{p\_value}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## market_excess_returns 
+##             0.2264591
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compare p{-}value to chosen level of significance (e.g., 0.05)}
+\ControlFlowTok{if}\NormalTok{ (p\_value }\SpecialCharTok{\textless{}} \FloatTok{0.05}\NormalTok{) \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Reject null hypothesis: slope coefficient is not equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\} }\ControlFlowTok{else}\NormalTok{ \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Fail to reject null hypothesis: slope coefficient is equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Fail to reject null hypothesis: slope coefficient is equal to 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# One sided test for Microsoft}
+\CommentTok{\# Compute the t{-}statistic}
+\NormalTok{t\_stat }\OtherTok{\textless{}{-}}\NormalTok{ (}\FunctionTok{coef}\NormalTok{(lm\_1)[}\StringTok{"market\_excess\_returns"}\NormalTok{] }\SpecialCharTok{{-}} \DecValTok{1}\NormalTok{) }\SpecialCharTok{/} \FunctionTok{summary}\NormalTok{(lm\_1)}\SpecialCharTok{$}\NormalTok{coef[}\StringTok{"market\_excess\_returns"}\NormalTok{, }\StringTok{"Std. Error"}\NormalTok{]}
+
+\CommentTok{\# Obtain the p{-}value associated with the t{-}statistic}
+\NormalTok{p\_value }\OtherTok{\textless{}{-}}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{pt}\NormalTok{(}\FunctionTok{abs}\NormalTok{(t\_stat), }\DecValTok{2}\NormalTok{))}
+\NormalTok{p\_value}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## market_excess_returns 
+##            0.07486241
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Compare p{-}value to chosen level of significance (e.g., 0.05)}
+\ControlFlowTok{if}\NormalTok{ (p\_value }\SpecialCharTok{\textless{}} \FloatTok{0.05}\NormalTok{) \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Reject null hypothesis: slope coefficient is not equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\} }\ControlFlowTok{else}\NormalTok{ \{}
+  \FunctionTok{cat}\NormalTok{(}\StringTok{"Fail to reject null hypothesis: slope coefficient is equal to 1}\SpecialCharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Fail to reject null hypothesis: slope coefficient is equal to 1
+\end{verbatim}
+
+\end{document}
