@@ -1,0 +1,207 @@
+---
+title: "Homework 5  - Stats 230 (chapter 4.1, 4.2 and 4.4)"
+author: "Dhyey Mavani"
+date: "date"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+### MLR III - Added variable plots, Unusual points and Variable Selection Techniques (High Peaks & MLB wins)
+
+```{r, include = FALSE}
+library(mosaic)
+library(Stat2Data)
+library(leaps)
+library(broom)
+library(rvest)
+library(methods)
+options(digits = 6)
+```
+
+### PROBLEMS TO TURN IN: #4.2, #4.3, #4.12
+
+Note: A lot of code is provided for this assignment, but you'll still need to fit models and do some computations. 
+
+#### Exercise 4.2
+
+```{r}
+data(HighPeaks)
+```
+
+> 4.2 part a:
+
+SOLUTION: We can see that the correlation between Time and Elevation is slightly negative and I don't think its looks like that Elevation should be very helpful in predicting Time because the correlation coefficient is very small (around -0.01 in this case).
+
+```{r}
+gf_point(Time ~ Elevation, data = HighPeaks) %>%
+  gf_lm()
+
+cor(Time ~ Elevation, data = HighPeaks)
+```
+
+
+> 4.2 part b: (Has 2 main components to it, requiring you to fit 3 models)
+
+SOLUTION: 
+
+We can see that model2 performs much better than model1 as the R^2 value is significantly higher. But, we can also see that when we have a model with just Length compared to two-predictor model with Length and Elevation, we don't have a significant difference in R^2 value which tells us that this two-predictor model does significantly better at explaining Time compared to the model with Elevation alone, but not compared to the model with Length alone. But since Elevation is still significant according to the p-value in our two-predictor model, I would prefer two-predictor model even though it just does marginally better than the model with just Length.
+
+```{r}
+model1 <- lm(Time ~ Elevation, data = HighPeaks)
+msummary(model1)
+
+model2 <- lm(Time ~ Elevation + Length, data = HighPeaks)
+msummary(model2)
+
+model3 <- lm(Time ~ Length, data = HighPeaks)
+msummary(model3)
+```
+
+> 4.2 part c:
+
+SOLUTION: We can see that the slopes of the added-variable plots are significantly negative and positive in the case of Elevation and Length respectively, hence it would make sense for us to keep both variables in our model of choice. Given this, we see a few points that may be unusual in both of these plots, but in my opinion the association is moderately strong.
+
+```{r}
+ car::avPlots(model2)
+```
+
+
+
+
+#### Exercise 4.3
+
+Note: Allowed predictors are all variables in the data set after WinPct. (It says any predictors after Wins and Losses, but Team is an identifier and League is not included in the text solution, so leave it out).
+
+```{r}
+data("MLBStandings2016")
+Standings <- MLBStandings2016 #renamed for faster typing
+```
+
+> 4.3 part a:
+
+SOLUTION: The predictors in our 4-predictor model are Runs, ERA, Saves and WHIP. The R^2 for this model is 88.6%
+
+```{r}
+#this will run the forward regression for you, the problem asks you to do more with the output.
+forward <- regsubsets(WinPct ~ BattingAverage + Runs + Hits + HR + Doubles + Triples
+                      + RBI + SB + OBP + SLG + ERA + HitsAllowed + Walks + StrikeOuts
+                      + Saves + WHIP, data = Standings, method = "forward", nbest = 1)
+with(summary(forward), data.frame(rsq, cp, outmat)) 
+```
+
+```{r}
+model <- lm(WinPct ~ Runs + ERA + Saves + WHIP, data = Standings)
+msummary(model)
+```
+> 4.3 part b:
+
+SOLUTION: The predictors in our 4-predictor model are BattingAverage, Runs, Saves and WHIP. The R^2 for this model is 88.4%
+
+```{r}
+backward <- regsubsets(WinPct ~ BattingAverage + Runs + Hits + HR + Doubles +
+                      Triples + RBI + SB + OBP + SLG + ERA + HitsAllowed + Walks
+                      + StrikeOuts + Saves + WHIP, data = Standings,
+                      method = "backward", nbest = 1)
+with(summary(backward), data.frame(rsq, cp, outmat))
+```
+
+
+```{r}
+model <- lm(WinPct ~ BattingAverage + Runs + Saves + WHIP, data = Standings)
+msummary(model)
+```
+
+> 4.3 part c:
+
+SOLUTION: The predictors in our 4-predictor model are Runs, Doubles, Saves and WHIP. The R^2 for this model is 88.9%
+
+```{r}
+best <- regsubsets(WinPct ~ BattingAverage + Runs + Hits + HR + Doubles + Triples
+                   + RBI + SB + OBP + SLG + ERA + HitsAllowed + Walks + StrikeOuts
+                   + Saves + WHIP, data = Standings, nbest = 1)
+with(summary(best), data.frame(rsq, cp, outmat))
+```
+
+```{r}
+model <- lm(WinPct ~ Runs + Doubles + Saves + WHIP, data = Standings)
+msummary(model)
+```
+
+> 4.3 part d:
+
+SOLUTION: Mallow's Cps for four predictor models in parts (a), (b) and (c) are 11.16134, 11.88500 and 10.53656 respectively.
+
+> 4.3 part e:
+
+SOLUTION: We can see that the four predictor model from part (c) has the lowest Cp and highest R^2 among others.
+
+#### Exercise 4.12
+
+> 4.12 part a:
+
+SOLUTION: I think the four predictor model would be my choice since it has highest R^2 and lowest Cp. Going with 3 predictor model doesn't make sense for me because I think it is worth it to add an additional predictor which lowers Cp by over 1, while increasing R^2 and only slightly increasing the complexity of interpreting the model.
+
+```{r}
+best <- regsubsets(Time ~ Elevation + Difficulty + Ascent + Length, data = HighPeaks, nbest = 1)
+with(summary(best), data.frame(rsq, cp, outmat))
+```
+
+> 4.12 part b:
+
+SOLUTION: 
+
+We can see that there is a linear relationship.
+
+Equal (Constant) Variance - Assess with a residual vs. fitted plot. Looking for no pattern
+Next, we can check the condition for constant variance of errors by looking at the residual vs fitted plots.
+A few outliers are noted in red but nothing exerting a great deal of leverage (unduly influencing the overall relationship). There is no pattern of errors (looks like a cloud) and is mostly linear. IF the variance in Y was not equal across X we could see a fan shape indicating heteroscedastcity which would need to be resolved with a transformation.
+
+Normality - Assess the distribution of errors with histograms/qqplots of residuals errors should be centered at zero (ZERO MEAN), no skew or pattern (RANDOM)- necessary for inference.
+The histogram is relatively normal and centered at zero (latter condition is always true for least squares technique). There are a few high residuals > 15 that many need to be considered. All other residuals fall between +/- 15.
+In the QQPlot, we can see that most points are on the line, there is no real shape and only a few are off at the ends, hence we are good there!
+
+Thus, I can say that the conditions look fine for the reasonability of the model.
+
+```{r}
+model <- lm(Time ~ Elevation + Difficulty + Ascent + Length, data = HighPeaks)
+msummary(model)
+mplot(model, which = 1)
+mplot(model, which = 2)
+```
+
+> 4.12 part c:
+
+SOLUTION: The unusual mountains are Seward Mtn., Mt. Donaldson, and Mt. Emmons with studentised residuals of 2.96456, 2.10301 and 2.56285 respectively. This is because their studentized residuals are greater than 2.
+
+```{r}
+HighPeaksAug <- augment(model) %>% mutate(.stu.resid = rstudent(model)) 
+filteredHighPeaksAug <- HighPeaksAug %>% filter(abs(.stu.resid) >= 2)
+filteredHighPeaksAug
+#filter for unusual values; abs() in R is absolute value
+```
+
+
+> 4.12 part d:
+
+SOLUTION: We know that Leverage cutoff in this case is 2(4+1)/46 = 0.217391. Also, the Cook's distance cutoff is 0.5. Now we can continue our analysis. We see that the Cook's distance stays less than 0.5 for all observations, hence we don't have to worry about that unusualness. But, we can see that the mountains Mt. Marcy, Cascade Mtn., Cliff Mtn. and Nye Mtn. have hat values of 0.223127, 0.217738, 0.217848 and 0.275927 respectively which are greater than the moderate leverage cutoff, which implies that these data points are unusual in the sense that they have high leverage.
+
+```{r}
+#suggest using plots and numeric values to support your response
+#_values are saved in HighPeaksAug
+mplot(model, which = 5)
+mplot(model, which = 6)
+```
+
+```{r}
+filterHighPeaksAug <- HighPeaksAug %>% filter(abs(.hat) >= 0.217391)
+filterHighPeaksAug
+
+#   
+```

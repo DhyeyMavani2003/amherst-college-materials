@@ -1,0 +1,175 @@
+---
+title: "HANDOUT - Stat 230 - Variable Selection (c4.2)"
+author: "P.B.Matheson adadpted from S.M. Liao and A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r, include = FALSE}
+library(mosaic)
+library(leaps)
+library(broom)
+library(mosaicData)
+library(HH)
+require(MASS)
+require(leaps)         ##needed for regsubsets()
+require(kableExtra)    ##needed for kable()
+options(digits = 6)
+```
+
+At the top of this file, note we loaded a new library: *leaps*, which is needed for these functions. You should check that it is installed/loaded if trying to work with these commands. There are also options using the *HH* library (optional) where you'd need to install this package once to use it. 
+
+
+The HELPrct data set contains 453 observations on 27 variables. The data is the data set on Health Evaluation and Linkage to Primary Care study results. The HELP study was a clinical trial for adult inpatients recruited from a detoxification unit. Patients with no primary care physician were randomized to receive a multidisciplinary assessment and a brief motivational intervention or usual care, with the goal of linking them to primary medical care.
+
+```{r}
+data(HELPrct)
+#names(HELPrct) # shows the variable names in the dataset
+#help(HELPrct) #will tell you more about the dataset
+dim(HELPrct) #displays the number of rows and columns in the dataset
+#str(HELPrct) #quickly shows you the data
+```
+
+We want to eliminate those subjects with missing data (for our methods to run - dealing with missing data may be a topic that needs further investigating for your projects). 
+
+```{r}
+HELPrct <- with(HELPrct, HELPrct[ !is.na(drugrisk), ])
+dim(HELPrct)
+```
+
+This eliminates the ONE data point with missing values. Notice the dimensions of the data file has gone from 453 rows(observations)with 30 columns(variables) to 452 rows.
+
+Let's predict a baseline measure of depression (cesd) using other baseline variables including age, number of previous hospitalizations (d1), drug risk (drugrisk), average (i1) and maximum (i2) number of drinks in a day (last 30 days), inventory of drug use score (indtot), mental (mcs) and physical (pcs) component score, perceived social support (pss_fr), and sex risk score (sexrisk). 
+
+Using what we know now we will just throw in all the predictors.
+
+```{r}
+modall <- lm(cesd ~ age + d1 + drugrisk + i1 + i2 + indtot +
+               mcs + pcs + pss_fr + sexrisk, data = HELPrct)
+msummary(modall)
+car::vif(modall)
+```
+
+QUESTIONS:  
+
+1. What variables are significant in predicting cesd?     
+
+2. How well does the model fit?    
+
+3. Do we observe any issues with multicollinearity that might make interpreting coefficients difficult?  
+
+Let's see if we can simplify the model building process.
+There are 4 variable selection techniques (methods) we will review (best subsets, backward, forward, and stepwise) to come up with a good set of predictors for predicting cesd.  
+
+We will start by considering all 10 predictors and use **best subsets**. This technique helps determine the best model(s) for each set of models of a given size, e.g., 1 predictor, 2 predictors, ..., all way through the full-term (10 predictor) model. 
+
+To run this procedure (regsubsets), you must specify what criteria will be used to define the *best*. One commonly used measure is "Mallows' Cp".  R defaults to Akaike Information Criteria (AIC) unless you specify otherwise.  Note: the lower the Cp or AIC, the better. The Bayesian Information Criteria (BIC) is also available.
+
+DEFINITIONS:  
+
+Mallow's $C_p$ is defined as:  
+      
+$$ C_p = \frac{SSE_m}{MSE_k} + 2(m+1) - n$$    
+
+where there is a subset of $m$ predictors from a full set of $k$ predictors, with a sample size $n$.
+
+
+OTHER SELECTION CRITERIA that can be used to evaluate best model (FYI only):
+
+$$AIC = n \cdot log(MSE_m) + 2(m+1)$$ 
+$$BIC = n \cdot log(MSE_m) + log(n) \cdot (m+1)$$   
+
+
+## Best Subsets using Mallow's Cp to determine best option for variable inclusion
+
+First we set the list of explanatory variables for the leaps function to work on. Then we tell it to run using the Cp method and plot the results. 
+
+```{r}
+best <- regsubsets(cesd ~ age + d1 + drugrisk + i1 + i2 + indtot +
+               mcs + pcs + pss_fr + sexrisk, data = HELPrct, nbest = 1)
+with(summary(best), data.frame(rsq, adjr2, cp, rss, outmat))
+```
+
+
+The HH package has a nicer function for displaying the regsubsets results.
+```{r}
+summaryHH(best)
+```
+
+We can examine lots of properties about the best subsets solutions in the output above. You can also adjust the summary to give you only certain statistics if you want to focus on just one or two. Here, we want to examine the model with the minimum Cp value, which we can see is the model with 5 predictors. 
+
+Remember, the procedure regsubsets does not actually run the regressions and show them to us. We have to actually fit the model chosen by best subsets, using only those variables marked by the best subsets process (a model with the 5 predictors of i1, mcs, pcs, pss_fr and sexrisk).
+
+```{r}
+Cpmod <- lm(cesd ~ i1 + mcs + pcs + pss_fr + sexrisk, data = HELPrct)
+msummary(Cpmod)
+```
+4. How does this solution compare to the model with all 10 predictors?   
+
+
+```{r}
+anova(Cpmod,modall) # conducts nested F test to answer question 4
+AIC(Cpmod,modall) # gives us the AIC values for the 2 models
+```
+
+
+\newpage
+## Backward elimination
+
+Recall that backward elimination starts from the full model. The logic asks which variable can I remove? and repeat!
+We can use regsubsets with the backward method (see below). Since your book focuses on Cp as the criterion, it is selected here.  The default maximum number of predictors it will test is 8. If you have a very large set of predictors, you may need to adjust that value as an option (nvmax).  
+
+```{r}
+backward <- regsubsets(cesd ~ age + d1 + drugrisk + i1 + i2 + indtot +
+               mcs + pcs + pss_fr + sexrisk, data = HELPrct, method = "backward", nbest = 1)
+with(summary(backward), data.frame(cp, outmat))
+```
+In this particular case, the final model is the same one (line 5) achieved via minimizing the Cp from the best subset model. This does NOT always occur.  Again, you still have to fit the model (run lm) selected to get its summary output. 
+ 
+
+
+
+## Forward selection
+
+For forward selection, we start from a model with just an intercept and build up a model one predictor at a time. The logic asks what variable can I add now?  repeat!
+```{r}
+forward <- regsubsets(cesd ~ age + d1 + drugrisk + i1 + i2 + indtot +
+               mcs + pcs + pss_fr + sexrisk, data = HELPrct, method = "forward", nbest = 1)
+with(summary(forward), data.frame(cp, outmat))
+```
+
+This method also obtains the same model as our bestsubset option (line 5), and as backward selection. Again, the methods do not always agree on final models!
+
+You still have to fit the final model yourself to get the model summary.
+
+
+
+## Stepwise Regression
+
+Starts off looking like forward selection but allows for predictors to be kicked out (like backwards) as the process goes. It takes the unidirectional blinders off. 
+
+```{r}
+stepwise <- regsubsets(cesd ~ age + d1 + drugrisk + i1 + i2 + indtot +
+               mcs + pcs + pss_fr + sexrisk, data = HELPrct, method = "seqrep", nbest = 1)
+with(summary(stepwise), data.frame(cp, outmat))
+```
+The final decision about which model is best (based on Cp) remains the same, but you can lso see the size 8 model was different.
+You still have to fit the final model yourself to get the model summary. AND you have to check conditions, multicollinearity and outliers.
+
+
+### ANOTHER WAY to do this in R 
+A quick way to use `AIC` as the selection criteria can be with the command `stepAIC` and it is shown below.  If you are too eager to watch all the steps, you can add the option after backward of trace=FALSE.
+```{r}
+#stepAIC(modall,direction="backward")$anova
+#stepAIC(modall,direction="backward",trace=0)$anova
+```
+You still have to fit the final model yourself to get the model summary.  

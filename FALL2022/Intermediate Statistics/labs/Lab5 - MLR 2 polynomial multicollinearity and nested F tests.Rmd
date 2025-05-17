@@ -1,0 +1,180 @@
+---
+title: "LAB 5 HANDOUT  Stat 230 - MLR Models - Polynomial Regression, Multicollinearity, and Nested F-tests (MLR II)"
+author: "P.B. Matheson adopted from  A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+Your mission, should you choose to accept it, is to model *diameter* as a function of other measurements of sea snails. 
+
+At the end of lab, we will discuss what models you found that you like for predicting diameter. Some steps to help you (items you should be sure to do) are provided. Some example code is provided with  generic values, for you to modify. 
+
+```{r, include = FALSE}
+library(mosaic)
+options(digits = 8)
+```
+
+```{r}
+abalone <- read.table("https://pmatheson.people.amherst.edu/stat230/abalone.txt",
+    h = T, sep = ",")
+```
+
+This data set was stored as a comma-delimited text file (not a .csv), so I read it in as a table, and had to use the sep option to tell it about the commas.
+
+This data set contains information on 4177 abalones (sea snails). The variables included are:  
+* Sex - M, F, and I (infant) - Note there are THREE levels here  
+* Length - mm - Longest shell measurement  
+* Diameter - mm - perpendicular to length  
+* Height - mm - with meat in shell  
+* Whole weight - grams - whole abalone  
+* Shucked weight - grams - weight of meat  
+* Viscera weight - grams - gut weight   
+* Shell weight - grams - after being dried  
+* Rings - number of rings in the shell - 1.5+rings gives the age in years   
+
+Note that the descriptions provided do not exactly match the variable names - whoever entered the data shortened the names somewhat. To see the names of variables in the data set, use:
+
+```{r}
+names(abalone)
+```
+
+The weight variables all have weight abbreviated as wt.
+
+> Take a look at the variables in your data set, basic summaries, etc. 
+
+SOLUTION:
+
+```{r}
+glimpse(abalone)
+```
+
+> Obtain the correlation matrix for your data set. Determine if there may be possible issues with multicollinearity for MLR models, and also determine what predictors may be a good choice to fit a SLR predicting diameter with. 
+
+SOLUTION: Length has best correlation with Diameter.
+
+```{r}
+cor(select(abalone, -Sex)) #remove Sex
+```
+
+> Plot and fit a SLR predicting diameter using a predictor you think is appropriate. Check your model conditions. If there are issues with the conditions, would transformations of variables be appropriate to help? What transformations? 
+
+SOLUTION:
+SAMPLE CODE IS GIVEN HERE, X is standing in for what ever variable you choose.  Make sure to put this into an R chunk to run it.
+
+```{r}
+gf_point(Diameter ~ Length, data = abalone) %>% 
+   gf_lm()
+
+fm1 <- lm(Diameter ~ Length, data = abalone)
+msummary(fm1)
+mplot(fm1, which = 1)
+mplot(fm1, which = 2)
+```
+
+> Add an interaction term between Sex and your chosen SLR predictor to the model (and save it with a new name). Practice interpreting the coefficients in this model. 
+
+SOLUTION: 
+
+```{r}
+fm1 <- lm(Diameter ~ Length * Sex, data = abalone)
+msummary(fm1)
+mplot(fm1, which = 1)
+mplot(fm1, which = 2)
+```
+
+
+
+
+
+> Throw in the kitchen sink. Use all predictors to predict diameter - just their main effects, no interaction terms. How well does the model appear to fit?
+
+SOLUTION:
+
+```{r}
+fm.full <- lm(Diameter ~ ., data = abalone)
+msummary(fm.full)
+```
+
+> Use a nested F-test to test between your SLR and kitchen sink models (why wouldn't it work to compare the kitchen sink and the interaction model?). Be sure to explicitly state what hypotheses are being tested (can you identify the subset of variables being tested?), as well as what your conclusion is.
+
+SOLUTION: 
+
+```{r}
+anova(fm1, fm.full)
+```
+
+> Examine your full model for issues of multicollinearity by computing the VIFs. Explain how you can tell if VIFs are unusual and determine how you should proceed based on your results. Be sure to call the car library as shown.
+
+SOLUTION:
+
+```{r}
+car::vif(fm.full)
+```
+
+> Build two other models that you are interested in considering for predicting diameter using either interaction terms or higher powers. Make these two models nested (one within the other). Is either model nested inside the full model above? 
+
+SOLUTION:
+
+```{r}
+fm1 <- lm(Diameter ~ Height * Rings + I(Height^2) + I(Rings^2), data = abalone)
+msummary(fm1)
+mplot(fm1, which = 1)
+mplot(fm1, which = 2)
+```
+
+> Perform a nested F-test to compare the two models you choose to examine previously. Be sure you can explicitly state what subset of variables is being tested, and what the conclusion is.
+
+SOLUTION:
+
+```{r}
+
+```
+
+> Continue to fit models until you find one you are happy (at least somewhat happy) with. At that time, report your final fitted model for predicting diameter. 
+
+SOLUTION:
+
+```{r}
+
+```
+
+> For your fitted model, interpret the coefficients of at least 2 predictors (including at least one interaction term if you have one). 
+
+SOLUTION:
+
+> Check your model conditions. Report on any violations. 
+
+SOLUTION:
+
+```{r}
+
+```
+
+> Check for multicollinearity issues. 
+
+SOLUTION:
+
+```{r}
+
+```
+
+> Obtain a predicted value of diameter for a sea snail that has the following characteristics, as well as a 99% confidence interval for the mean diameter at this set of characteristics:
+
+```{r}
+newdata <- data.frame(Sex = "M", Length = 0.56, Height = 0.175, Wholewt = 1.01, Shuckedwt = 0.384, Viscerawt = 0.206, Shellwt = 0.37, Rings = 15) #this is abalone #256
+```
+
+SOLUTION:
+
+```{r}
+
+```
+

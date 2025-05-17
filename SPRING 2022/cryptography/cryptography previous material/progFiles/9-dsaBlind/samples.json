@@ -1,0 +1,62 @@
+[
+  {
+    "name": "6-bit p, 3-bit q",
+    "input": [
+      61,
+      5,
+      9,
+      58
+    ],
+    "key": "(many answers possible; use your verifyDSA code to check if your signatures are valid)"
+  },
+  {
+    "name": "10-bit p, 5-bit q",
+    "input": [
+      523,
+      29,
+      490,
+      121
+    ],
+    "key": "(many answers possible; use your verifyDSA code to check if your signatures are valid)"
+  },
+  {
+    "name": "20-bit p, 10-bit q",
+    "input": [
+      848387,
+      787,
+      415396,
+      405248
+    ],
+    "key": "(many answers possible; use your verifyDSA code to check if your signatures are valid)"
+  },
+  {
+    "name": "48-bit p, 32-bit q",
+    "input": [
+      155731423084339,
+      4104892801,
+      134393814117589,
+      116516832208535
+    ],
+    "key": "(many answers possible; use your verifyDSA code to check if your signatures are valid)"
+  },
+  {
+    "name": "100-bit p, 64-bit q",
+    "input": [
+      1008115003136807667804162757091,
+      12622578750816745511,
+      278238252339413851740821547801,
+      871853940163364247259921911688
+    ],
+    "key": "(many answers possible; use your verifyDSA code to check if your signatures are valid)"
+  },
+  {
+    "name": "512-bit p, 256-bit q",
+    "input": [
+      7260083298352242757544744334700778053297275520714724887636920246980090192123108768942140532851371613441384963103537160090153530336022677393655327241999169,
+      102315585079393005123095215398318839125907866224774501653885115147475372099961,
+      6432532704228938321100314559140158506567161711787609775885045158412010240053091805305595543639135623928476783245919961826524630153021018836638607884316148,
+      5325302203472671042236178397861996592677080268811521102331413874711989992801467071407858308968145643238544539243169124488712627127410319829387013439283349
+    ],
+    "key": "(many answers possible; use your verifyDSA code to check if your signatures are valid)"
+  }
+]

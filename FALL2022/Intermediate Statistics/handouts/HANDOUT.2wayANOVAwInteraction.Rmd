@@ -1,0 +1,178 @@
+---
+title: "HANDOUT Two-Way ANOVA with Interaction"
+author: "P.B. Matheson adopted from S.M.Liao"
+date: "STAT 230"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+require(gridExtra)    
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+options(digits=5)  
+```
+
+
+## Runners Data
+
+Recall that we used this dataset on the heart rates `hr` after six minutes of exercise on a treadmill. The two factors are: `group` (Control vs. Runners) and `gender` (Female vs. Male), and we want to see whether or not heart rates differed on average across either groups or genders. 
+
+```{r echo=FALSE}
+Runners <- read.csv("https://pmatheson.people.amherst.edu/stat230/runners.csv")
+favstats(hr ~ group + gender, data = Runners)  
+```
+    
+There are many different ways to get interaction plots.  The lab for this week has another method of plotting and later in this handout is a simpler way as well.
+
+Note that the side by side graphs is obtained with grid.arrange.
+
+```{r fig.width=8, fig.height=4, message=FALSE}
+## Chunk options: fig.width=8, fig.height=4, message=FALSE ## 
+bxplot <- gf_boxplot(hr ~ group, color = ~ gender, data = Runners, 
+                     title = "side-by-side boxplots", show.legend = FALSE) %>%
+          gf_lims(y = c(60, 200)) 
+interplot <- gf_point(hr ~ group, color = ~ gender, data = Runners, 
+                      group = ~ gender, stat = "summary", title = "interaction plot") %>%
+             gf_line(hr ~ group, color = ~ gender, data = Runners, 
+                     group = ~ gender, stat = "summary") %>%
+             gf_lims(y = c(60, 200))
+grid.arrange(bxplot, interplot, ncol = 2)   ## Need to load the package `gridExtra`
+```
+  
+From the introductory lecture on two-way ANOVA we learned that the difference in average heart rates between genders was significant at $\alpha=0.05$ (gender main effect) as well as the difference between runners and non-runners (group main effect).     
+
+QUESTION: Using the *left* plot (side-by-side boxplot), do you think there is an **INTERACTION effect**?      
+    
+\vspace{.5in}   
+
+
+QUESTION: Using the *right* plot (**interaction plot**), do you think there is an **INTERACTION effect**?      
+
+\vspace{.5in}   
+
+
+Here is another way (easier way?) to create an interaction plot in `R` via the function `interaction.plot()`.          
+
+```{r fig.height=3.5}
+## Syntax: with(Dataset, interaction.plot(factorA, factorB, Response)) ##
+with(Runners, interaction.plot(group, gender, hr))
+```
+
+
+
+### Fit a two-way ANOVA model WITH interaction         
+
+Now let's include the interaction term using `*`. Again, we can fit an ANOVA model via either `lm()` or `aov()`.    
+
+```{r results='hide'}
+mod2 <- lm(hr ~ group*gender, data = Runners)      #added interaction term by using *
+anova(mod2)
+```
+
+```{r}
+aovmod2 <- aov(hr ~ group*gender, data = Runners)    
+summary(aovmod2)
+model.tables(aovmod2)      ## estimated parameters  
+```
+
+* Check the conditions:      
+
+```{r fig.width=3.3, fig.height=3.3, warning=FALSE, message=FALSE, echo=FALSE}
+## Chunk options: fig.width=3.3, fig.height=3.3, warning=FALSE, message=FALSE, echo=FALSE  
+mplot(mod2, which = 1) 
+mplot(mod2, which = 2)
+```
+
+QUESTION: Do you think the conditions check out based on the plots?   
+
+
+\vspace{.3in}
+
+Return to the ANOVA table. There are now three F-statistics and the third one is 7.41.    
+
+QUESTION: What set of hypotheses is this used to test? What would your conclusion be here?        
+
+
+\vspace{.5in}  
+
+
+
+Note that having a **significant interaction term** means **interpretations of main effects cannot be done without including interaction**; in other words, when interaction is present, it might not be meaningful to interpret the main effects alone. Instead, we focus on inference about *conditional effects* - see more details below.    
+
+
+\newpage  
+
+QUESTION: Do you need to use multiple comparisons procedures here to find where the differences are?
+
+
+\vspace{.5in}  
+
+Let's see what happens if we use Tukey's HSD in this setting to identify differences when we have an *interaction* term in the model. 
+
+```{r}
+TukeyHSD(mod2)
+```
+      
+
+QUESTION: How do these comparisons differ from the comparisons we did before? (What is added?) What do these results show you?  
+
+
+\vspace{.5in}  
+
+
+
+To make inference about the *Runners* effect (compared to *non-runners*), we would need to look at that *conditioning on* (separately for) different 'genders'. 
+
+* For Females:  We are 95% confident that the average heart rate of runners is between 28 and 36 bpm *lower* than that of non-runners; the estimated difference between their mean heart rate is 32 bpm, which is quite large as it's `r 32/sqrt(242)*100`% as big as the typical size of the difference between two females.     
+
+
+* For Males:  We are 95% confident that the average heart rate of runners is between 22 and 30 bpm *lower* than that of non-runners; the estimated difference between their mean heart rate is 26 bpm, which is also large as it's `r 26/sqrt(242)*100`% as big as the typical size of the difference between two males.         
+
+You can make inference about the *gender* effect using the same way.   
+
+Note that this example was a 2x2 ANOVA with interaction with **balanced** cells (each cell had 200 observations) - which is a relatively simple case in two-way ANOVA.      
+
+
+\newpage  
+
+Recall that an ANOVA model is equivalent to a regression model with indicator variables - this doesn't only apply to one-way ANOVA model; it works for multi-way ANOVA models too! 
+
+```{r}
+msummary(mod2)
+```
+\   
+
+Fitted Model:      
+
+\vspace{3in}
+
+
+As for the ANOVA output, it's difficult to interpret either coefficients for the main effects alone, WITHOUT interpreting the coefficient of the interaction term when the interaction term is significant. Again, you would want to interpret those main effects *conditionally*.   
+
+
+

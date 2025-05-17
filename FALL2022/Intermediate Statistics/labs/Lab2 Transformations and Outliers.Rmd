@@ -1,0 +1,155 @@
+---
+title: "Lab 2 - Stat 230  Transformations and Outliers"
+author: "P.B.Matheson adapted from A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+### Transformations / Re-expressions
+
+```{r, include = FALSE}
+library(mosaic)
+library(manipulate)
+library(broom)
+```
+
+For this exercise, we first load the **Boston** dataset.
+
+```{r}
+boston <- read.table("https://pmatheson.people.amherst.edu/stat230/boston.txt", header = TRUE)
+```
+
+This is a data set on 14 variables on housing values in the suburbs of Boston. Variables include crime, zone (deals with residential proportion of housing), indust (deals with industry proportion), charles (on river or not), nox (amount of nitric oxides), rooms (avg. number per dwelling), age (proportion built before 1940), distance (weighted to 5 employment centers), radial (index of access to highways), tax (property tax per $10,000), ptratio (pupil-teacher ratio), minor (index of proportion of minorities), lstat (% lower status of population), and medv (median value of homes).  Zone is always between 0 and 100. Charles is a binary variable. Radial is an index from 1- 24 (integers). The oddest variable is perhaps minor. Values from 196 and below indicate a large proportion of minorities. Values around 396 indicate a completely non-minority area, and values below 396 down to 196 indicate areas that have decreasing proportions of minorities. 
+
+Suppose we want to try to predict *nox* (amount of nitric oxide - a pollutant) as a function of *distance* (how far the house is from the Charles River). 
+
+```{r}
+gf_point(nox ~ distance, data = boston)
+```
+
+Based on the plot, does it appear that this is reasonable for a linear regression?
+
+> ANSWER
+
+There are issues here so we should explore some re-expressions. Let's add a new variable to the data set to use for this purpose. The command below adds the variable (sqrtdist- as the square root of distance from the Charles River) to the data set boston. 
+
+```{r}
+boston <- mutate(boston, sqrtdist = sqrt(distance))
+```
+
+Let's look at the relationship between nox and the new transformed variable (sqrtdistance).
+
+```{r}
+gf_point(nox ~ sqrtdist, data = boston)
+```
+
+Based on the scatterplot, does it appear that this is reasonable for a linear regression? Is it improved over the original?
+
+> ANSWER
+
+After trying some transformations of the response *nox* as well and  exploring a bit (adding transformed variables, making scatterplots, etc.), the following re-expressions - square root of distance and log of nox seem to be best. It's not perfect, but is more linear than the original.For our class just try a few powers (square, cube, square root, log) and pick the best.
+
+```{r}
+boston <- mutate(boston, lognox = log(nox))
+gf_point(lognox ~ sqrtdist, data = boston) %>% 
+  gf_lm()
+```
+
+Fit a regression line with these two re-expressed variables and report your fitted regression line in terms of the new variables you used. 
+
+```{r}
+#you need lm and another command - should be two lines
+# Fit
+fm <- lm(lognox ~ sqrtdist, data = boston)
+msummary(fm)
+confint(fm, level = 0.95)
+```
+
+What about outliers? Good question!
+
+For most of our analyses, we will leave outliers in the model, and if really concerned, run the model a second time without the outliers to see their impact. This means we need ways to easily find them (plots are often used) and temporarily remove them from the dataset (filter). 
+
+Do you see any points that might be considered outliers based on chosen fit above? You probably do. First, you might just want to identify the points in question - are there points particularly far away from the overall pattern?
+
+> ANSWER
+
+
+Assuming you said yes and had similar criteria, to get just the observation numbers of these points, you can do commands like this:
+
+```{r}
+with(boston, which(lognox > -0.2)) #IDs points with lognox > -0.2
+with(boston, which(sqrtdist > 3.2)) #IDs points with sqrtdist > 3.2
+with(boston, which(lognox > -0.2 & sqrtdist < 1.2)) #IDs points with lognox > -0.2 and sqrtdist < 1.2
+```
+
+Recall that we also could just look for residuals larger than 2 in absolute value when standardized. abs() does absolute value. There are several ways to get the residuals. One way is to use the *rstandard* and *rstudent* functions. So you could do something like:
+
+```{r}
+#model refit because not sure what you may have called yours above
+fm <- lm(lognox ~ sqrtdist, data = boston)
+msummary(fm)
+standres <- rstandard(fm) #computes standardized residuals
+studres <- rstudent(fm) #computes studentized residuals
+which(abs(standres) > 2) #which standardized residuals are > 2 in absolute value
+which(abs(studres) > 2) #which studentized residuals are > 2 in absolute value
+```
+
+Assuming you had a fitted model called fm, you can SAVE the vector of unusual points, to then aid in their temporary removal from the dataset. The example below saves ones with high values of lognox - you could adjust it to just save ones with standardized or studentized residuals greater than 2 in absolute value. 
+
+```{r}
+highnox <- with(boston, which(lognox > -0.2)) #IDs points with lognox > -0.2
+boston2 <- boston[-highnox, ]
+```
+
+This allows you to filter data points with fairly simple R code. But, what if you wanted to string together several of these? The indexing idea gets a little old. Luckily, the dplyr package (which is loaded with mosaic) has a simple *verb* to help us with this. Do you remember which one? This is the preferred way to remove outliers temporarily - make a new data set with FILTER. 
+
+```{r}
+boston3 <- filter(boston, (lognox) < (-0.2)) #keep values with lognox < (-0.2), same as above two lines
+boston4 <- filter(boston, (lognox) < (-0.2), sqrtdist < 1.8, charles < 1)
+```
+
+What observations does the boston4 data set include? How many observations meet that criteria?
+
+> ANSWER 222 points
+
+```{r}
+with(boston, which((lognox) < (-0.2) & sqrtdist < 1.8 & charles < 1))
+```
+
+Another way that you can access the residuals (and some other values of interest) is to look at the augmented data set. This is obtainable via the *broom* package command *augment*. 
+
+```{r}
+augboston <- augment(fm)
+names(augboston)
+```
+
+What variables do you recognize in the augboston dataset?
+
+> ANSWER
+
+We will learn more about these variables as the semester progresses. You can filter this dataset using the same ideas as above, with the variables present. Note that the augmented dataset does not contain the studentized residuals. You can use *rstudent* and *mutate* to add those values to the augmented dataset though. 
+
+
+Remove any points you consider outliers from your boston dataset, using the filter command, and refit your model. Compare it to the original model. 
+
+> COMPARISON:
+
+```{r}
+
+```
+
+
+## Summary
+
+When looking at potential re-expressions, create new variables and save them to your data set using *mutate*. Make scatterplots with the new variables and check for improvements.
+
+For outliers, identify them on scatterplots, and then figure out ways to *filter* them out of the data set if you want to run the analysis without them (and also run it with them to assess their impact). 
+

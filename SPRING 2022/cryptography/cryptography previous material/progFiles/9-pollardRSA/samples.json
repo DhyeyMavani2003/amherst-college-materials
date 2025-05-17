@@ -1,0 +1,74 @@
+[
+  {
+    "name": "6-bit modulus; chosen to be weak against Pollard",
+    "input": [
+      35,
+      5,
+      17
+    ],
+    "key": 12
+  },
+  {
+    "name": "20-bit modulus; chosen to be weak against Pollard",
+    "input": [
+      372143,
+      147533,
+      49342
+    ],
+    "key": 371258
+  },
+  {
+    "name": "40-bit modulus; chosen to be weak against Pollard",
+    "input": [
+      477699668233,
+      276698590691,
+      256287263139
+    ],
+    "key": 262341303019
+  },
+  {
+    "name": "96-bit modulus; chosen to be weak against Pollard",
+    "input": [
+      46078560881844952408027970311,
+      12139962845764773192771679189,
+      25572640800575526175280260355
+    ],
+    "key": 19083485334404091390295594041
+  },
+  {
+    "name": "96-bit modulus; chosen to be weak against Pollard",
+    "input": [
+      28711114914165095737440671489,
+      1757557829194729537043631709,
+      6999022349353157116509393824
+    ],
+    "key": 8016837127228832072072422543
+  },
+  {
+    "name": "96-bit modulus; chosen to be weak against Pollard",
+    "input": [
+      50020898133751876623882380449,
+      15190953205362543065008459831,
+      25769132826891297732765303868
+    ],
+    "key": 12259500001066080074423043871
+  },
+  {
+    "name": "96-bit modulus; chosen to be weak against Pollard",
+    "input": [
+      39391301692695605110305428041,
+      21776410089693805557011295993,
+      5704668659989860792072848972
+    ],
+    "key": 11383681921319537288908740243
+  },
+  {
+    "name": "96-bit modulus; chosen to be weak against Pollard",
+    "input": [
+      28211876960068038254749948949,
+      9620127754763623062963294773,
+      5138654021226780912831426703
+    ],
+    "key": 5425507017863544705763892975
+  }
+]

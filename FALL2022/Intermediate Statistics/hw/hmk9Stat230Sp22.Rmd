@@ -1,0 +1,106 @@
+---
+title: "Homework 9 - Logistic Regression  Stats 230"
+author: "Dhyey Mavani"
+date: "date"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+
+```{r, include = FALSE}
+library(mosaic)
+library(Stat2Data)
+options(digits = 6)
+```
+
+### PROBLEMS TO TURN IN: #9.4, #9.6, #9.19, #9.22 
+
+#### Exercise 9.4
+
+$$odds = \frac{Probability}{1-Probability}$$
+
+> 9.4 part a:
+
+SOLUTION: odds = 0.8/(1-0.8) = 4 = 4:1
+
+> 9.4 part b:
+
+SOLUTION: odds = 0.25/(1-0.25) = 1/3 = 1:3
+
+> 9.4 part c:
+
+SOLUTION: odds = 0.6/(1-0.6) = 3/2 = 3:2
+
+#### Exercise 9.6
+
+$$Probability = \frac{odds}{1+odds}$$
+
+> 9.6 part a:
+
+SOLUTION: Probability = (1/3)/(4/3) = 1/4 = 0.25
+
+> 9.7 part b:
+
+SOLUTION: Probability = (5/2)/(7/2) = 5/7
+
+> 9.8 part c:
+
+SOLUTION: Probability = (1/9)/(10/9) = 1/10 = 0.10
+
+#### Exercise 9.19
+
+```{r}
+data("MedGPA")
+summary(MedGPA)
+```
+
+> 9.19 part a:
+
+```{r}
+model <- glm(Acceptance ~ MCAT, data = MedGPA, family = binomial(logit))
+msummary(model)
+```
+
+SOLUTION: $$logit(P(Accept)) = -8.7125 + 0.2460(MCAT)$$
+
+$$P(Accept) = \frac{e^{-8.7125+0.2460(MCAT)}}{1+e^{-8.7125+0.2460(MCAT)}}$$
+
+> 9.19 part b:
+
+SOLUTION: $e^0.2460 = 1.2789$ (rounded to 4 dp) The odds of acceptance are 1.2789 times higher for per unit increase in the MCAT score.
+
+
+> 9.19 part c:
+
+SOLUTION: $P(Accept) = \hat\pi(MACT = 40) = \frac{e^{-8.7125+0.2460(40)}}{1+e^{-8.7125+0.2460(40)}} = 0.7554$ (rounded to 4 dp) The estimated model indicates that the probability that a student with MCAT = 40 is accepted to medical school is around 0.7554.
+
+> 9.19 part d:
+
+SOLUTION: A student has around a 50-50 chance of being accepted to medical school for an MCAT score of approximately 35.
+
+```{r}
+myfun <- makeFun(model)
+gf_point(Acceptance ~ MCAT, data = MedGPA) %>%
+gf_fun(myfun(MCAT = x) ~ x, color = "red")
+```
+
+#### Exercise 9.22
+
+> 9.22 part a:
+
+SOLUTION: $\widehat{odds}(MMSE = -4) = e^{-0.742-0.294(-4)} = 1.5434$ (rounded to 4 dp) The estimated odds of Alzheimer’s disease for a patient with MMSE of -4 is 1.5434:1.
+
+>  9.22 part b:
+
+SOLUTION: $\widehat{\pi}(MMSE = -4) = \frac{e^{-0.742-0.294(-4)}}{1+e^{-0.742-0.294(-4)}} = 0.6068$ (rounded to 4 dp) The estimated probability of Alzheimer’s disease for a patient with MMSE of -4 is 0.6068.
+
+> 9.22 part c:
+
+SOLUTION: $\widehat{odds}(MMSE = -3) - \widehat{odds}(MMSE = -4) = e^{-0.742-0.294(-3)} - e^{-0.742-0.294(-4)} = -0.3931$ (rounded to 4 dp) If the MMSE changes from -4 to -3, then the estimated odds of Alzheimer's disease for a patient decreases by 0.3931 on average.
+
+> 9.22 part d:
+
+SOLUTION: $\widehat{\pi}(MMSE = -3) - \widehat{\pi}(MMSE = -4) = \frac{e^{-0.742-0.294(-3)}}{1+e^{-0.742-0.294(-3)}} - \frac{e^{-0.742-0.294(-4)}}{1+e^{-0.742-0.294(-4)}} = -0.0719$ (rounded to 4 dp) If the MMSE changes from -4 to -3, then the estimated probability of Alzheimer's disease for a patient decreases by 0.0719 on average.

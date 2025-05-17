@@ -1,0 +1,40 @@
+Arjun Kejriwal - COSC-111 Final Project
+
+Wall Street Simulator (FINAL IDEA):
+
+For my final project, I am planning to simulate a stock market trading game.
+
+The game starts by creating a trading account and portfolio for the user (there will only be one user). At the same time, an introductory animation 
+will be displayed on the StdDraw window welcoming the user to the Wall Street Simulator. There will be six different companies (Amazon, Microsoft, 
+Apple, Samsung, Facebook, and Twitter) that the user can invest in. The program will first take an integer input from the user asking for the number 
+of companies they want to buy shares of. If the input is below 1 or above 6 or has more than one entry, the program will display an appropriate error 
+message. The user starts with an initial amount of $1000. The program will also ask the user to input the number of shares they want to buy at each 
+company. The number of shares available at each company is different, ranging from 8 to 25. After the inputs are validated, the number of shares the 
+user has bought will be stored in an array of appropriate length. Then, the StdDraw window will transition to displaying the current portfolio of the 
+user and the current stock value of each company on two different ends. The design will be made as aesthetic as possible to add to the Wall Street vibe. 
+Three different integer variables will be used: cash, assets and portfolio value. After the shares are bought (the program will not allow the total 
+spending to be greater than $1000), the cash held by the user reduces, the portfolio value increases, while the value of assets remains the same.    
+  
+The game then starts. It simulates all the four quarters of the year 2021, and the overall change in the share value of each company will be displayed 
+at the end of each quarter (so the share value of each company will change 4 times). At the end of each quarter, this change will be displayed as a 
+table on the terminal window, along with the number of stocks left at each company, as well as using a green or red arrow on the StdDraw window (next 
+to the corresponding company logo and stock value). In order to make the game more interesting, news headlines will be displayed on the screen as reasons 
+for the respective changes in share value. These news headlines will be randomised and about 2 or 3 will be displayed at the end of each quarter. The 
+user will have the option to use their mouse to click on left and right arrows that allow them to navigate the news headlines. The changes in the share 
+value will also be randomized using Math.random(). At the end of each quarter, the value of the assets held by the user will be calculated based on the 
+change in companies’ share values. Based on these changes, the user can make one, two, or three decisions at the end of each quarter: buying more shares, 
+selling shares, or doing nothing to each company’s shares the user owns. This will affect the cash the user holds and their total portfolio value in 
+different ways. At the end of all four quarters, the user will have to sell all their shares, so that all their assets become cash. The final asset value 
+and the change in asset value will be displayed at the end of the game as large text on the StdDraw window. The user wins if they make a profit (positive
+change in total asset value). As mentioned before, this entire simulation will be displayed using both the terminal window and StdDraw, in which I plan 
+to use drawings (to show the user’s portfolio and the company share values, for example), animations (to show a gradual increase or decrease in the cash 
+and asset value, for example), and sounds (to create a Wall Street vibe, for example).
+
+As for user interaction, most inputs described above will be taken as command-line arguments. However, as mentioned above, I might try to incorporate a 
+few additional features that also allow the user to use the mouse and keyboard for different purposes, such as navigating through and viewing different 
+news headlines. In my code, I will be using conditionals (to check for validity of command line arguments, for example), loops (to update the array of 
+stocks owned by the user, for example), static methods (for the randomization of share value changes and news headlines, for example), arrays (storing 
+company stock values, for example), an additional class (called Stocks, for example, that holds all the key details about a company’s stock), and images 
+for the company logos (by reading from files). I will also try to include recursion in my program as well in order to implement a merge sort algorithm, 
+for example, that sorts, in ascending order, the returns from each company the user invested in.   
+

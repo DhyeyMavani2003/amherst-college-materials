@@ -1,0 +1,189 @@
+---
+title: "Homework 6  - Stats 230 One-way ANOVA and multiple comparisons: Knees and Sea Slugs"
+author: "Dhyey Mavani"
+date: "date"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r, include = FALSE}
+library(mosaic)
+library(tidyr)
+library(Stat2Data)
+library(DescTools) #for MCs 
+options(digits = 6)
+```
+
+### PROBLEMS TO TURN IN: #5.6, #5.8, #5.16, #5.18, #5.38, #5.46, #Additional 1
+
+
+#### Exercise 5.6 - Multiple Choice
+
+SOLUTION: B
+
+
+#### Exercise 5.8 - Multiple Choice
+
+SOLUTION: C
+
+
+#### Exercise 5.16 
+
+> 5.16 part a:
+
+SOLUTION: The explanatory variable is the dog food type and the response variable in this case is the average amount of time each dog sleeps per 24 hours for next week.
+
+> 5.16 part b:
+
+SOLUTION: This is a randomized experiment because we know that in this setting we randomly assign each dog to one of the three diets.
+
+> 5.16 part c:
+
+SOLUTION: Although dogs were not randomly selected from a population, the diet treatments were assigned to dogs in a randomized manner, so it is still appropriate to conduct an analysis of variance in this given situation.
+
+
+#### Exercise 5.18 (continues 5.16) 
+
+> 5.18 part a: Experimental Units
+
+SOLUTION: The Border Collies are the units in this experiment.
+
+> 5.18 part b: Treatments
+
+SOLUTION: The treatments are the type of food they are provided with which are salmon, chicken, and beef diets.
+
+> 5.18 part c: Balanced Experiment 
+
+SOLUTION: They have to make sure that each treatment has equal number of units assigned to it. This makes the experiment balanced
+
+
+#### Exercise 5.38
+
+```{r}
+data(Meniscus)
+#Method is recorded numerically, we need it to be a factor
+# FYI - The 3 methods are vertical suture, meniscus arrow, FastT-Fix
+Meniscus <- mutate(Meniscus, Method = factor(Method)) #overwrites the variable
+```
+
+> 5.38 part a: Hypotheses
+
+SOLUTION:
+
+$H_0$ : $\alpha_{verticalsuture}$ = $\alpha_{meniscusarrow}$ = $\alpha_{FasT-Fix}$.
+
+$H_A$ : $\alpha_{verticalsuture}$ $\ne$ $\alpha_{meniscusarrow}$ $\ne$ $\alpha_{FasT-Fix}$. 
+
+OR in words ...
+
+$H_0$: There is no difference in mean stiffness among the three treatment groups namely vertical suture, meniscus arrow and FastT-Fix.
+
+$H_A$: There is a difference between at least one of the means of stiffness of the three groups namely vertical suture, meniscus arrow and FastT-Fix.
+
+
+
+> 5.38 part b: Conditions
+
+SOLUTION: 
+
+The majority of the points of the qq plot fall along the line, so we have normality of errors condition met in this case. We can say that based on the residuals vs. fitted plot, there is mostly equal variance among the three treatment groups. Since each specimen unit was randomly assigned to one of the three treatments, randomization is satisfied. We can also see that the errors are centered at 0. So we can essentially say that all conditions are satisfied.
+
+```{r}
+favstats(Stiffness ~ Method, data = Meniscus)
+
+modNew <- lm(Stiffness ~ Method, data = Meniscus)
+plot(modNew, which = 1)
+```
+
+> 5.38 part c: ANOVA
+
+SOLUTION: Based on the t-test output we can see below, the p-value of 0.0219 (< 0.05 which is significant), we can say that the data provides us withstrong evidence that the mean value of stiffness significantly differs based on the type of meniscus repair between at least two treatment groups on average.
+
+```{r}
+anova(modNew)
+```
+
+
+
+#### Exercise 5.46 (continues 5.38)
+
+SOLUTION:
+
+There are differences in stiffness between the treatments meniscus arrow - vertical suture, and FasT-Fix - meniscus arrow according to thee p-values of Fisher's LSD. 
+
+We can see that since the confidence interval of meniscus arrow - vertical suture contains only negative values while the confidence interval of FasT-Fix - meniscus arrow contains only positive values, this implies that vertical suture results in less stiffness than meniscus arrow.
+
+Hence, we can say Fast-Fix is better treatment than meniscus arrow.
+
+On the other hand, there is no significant difference between FasT-Fix and vertical suture as we can see in the output below.
+
+Thence, doctors should use FasT-Fix and vertical suture over meniscus arrow.
+
+```{r}
+meniscus_aov <- aov(Stiffness ~ Method, data = Meniscus)
+summary(meniscus_aov)
+
+PostHocTest(meniscus_aov, method = "lsd")
+```
+
+
+#### Additional 1 - More MCs - Based on 5.71 and 8.14
+
+Read problem 5.71 for context. We are going to examine all three MC methods here and compare them. We will assume conditions for inference are met. If you read 8.14 as well, note there is a typo there - there are 6 time periods here. 
+
+```{r}
+data(SeaSlugs)
+#Time is recorded numerically in the data set. We need it as a factor.
+SeaSlugs <- mutate(SeaSlugs, TimeF = factor(Time))
+#Use TimeF for your analysis as the categorical predictor
+```
+
+> ADD1 part a: Fit the requested ANOVA from 5.71, and verify that the overall F is significant. 
+
+SOLUTION: Based on the t-test shown below, we can see that p-value of 0.000607 (< 0.05 which is significant). This implies that we have strong evidence that the mean percentage of larvae that metamorphosed differs over the six time periods.
+
+```{r}
+favstats(Percent ~ TimeF, data = SeaSlugs)
+modMy <- lm(Percent ~ TimeF, data = SeaSlugs)
+anova(modMy)
+```
+
+> ADD1 part b: Perform Fisher's LSD and identify significant differences in mean percentage metamorphosed. 
+
+SOLUTION: Let's use the Fisher’s LSD as done below. We can see that there are significant differences in mean percentage metamorphosed between time intervals 5 and 0, 10 and 0, 15 and 0, 20 and 0, 25 and 0, and 25 and 5.
+
+```{r}
+seaslugs_aov <- aov(Percent ~ TimeF, data = SeaSlugs)
+PostHocTest(seaslugs_aov, method = "lsd")
+```
+
+
+> ADD1 part c: Perform Tukey's HSD and identify significant differences in mean percentage metamorphosed.
+
+SOLUTION: Let's use the Tukey’s HSD as done below. We can see that there are significant differences in mean percentage metamorphosed between time intervals 10 and 0, 15 and 0, 20 and 0, and 25 and 0.
+
+```{r}
+PostHocTest(seaslugs_aov, method = "hsd")
+```
+
+> ADD1 part d: Perform Bonferroni's adjustment for the multiple comparisons and identify significant differences in mean percentage metamorphosed.
+
+SOLUTION: Let's use Bonferroni’s adjustment for the multiple comparisons as done below. We can see that there are significant differences in mean percentage metamorphosed between time intervals 10 and 0, 15 and 0, 20 and 0, and 25 and 0.
+
+```{r}
+PostHocTest(seaslugs_aov, method = "bonferroni")
+```
+
+> ADD1 part e: Compare the significant differences found by the three methods. (E.g. do they agree? etc.) 
+
+SOLUTION: We can see that Tukey's HSD and Bonferroni’s adjustment found the same pairs of time intervals that had differences in mean percentage metamorphosed although they have slightly different significance levels. On the other hand, we can see that Fisher's LSD found additional differences between time intervals 5 and 0, and 25 and 5. This honestly makes sense to me because it is a property of Fisher's LSD that it finds the most potential differences while some of them might not be true ones.
+

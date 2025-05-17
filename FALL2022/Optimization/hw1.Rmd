@@ -1,0 +1,94 @@
+---
+title: "Homework 1  - Maqth 294"
+author: "Dhyey Mavani"
+date: "date"
+output: 
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+
+---
+
+### Dhyey Mavani      
+
+
+```{r, include = FALSE}
+library(pracma)
+```
+
+```{r}
+A <- matrix(c(2, 1, 1, 0, 4, 1, 0, 1), 2, 4, byrow = TRUE)
+A
+rref(A)
+
+Ab <- matrix(c(2, 1, 1, 0, 440, 4, 1, 0, 1, 680), 2, 5, byrow = TRUE)
+Ab
+rref(Ab)
+
+a1 <- c(2,4)
+a2 <- c(1,1)
+a3 <- c(1,0)
+a4 <- c(0,1)
+b <- c(440,680)
+
+# choose different pairs of linearly independent 
+# columns to be first two in A to find all basic solns
+rref(cbind(a1,a2,b))
+rref(cbind(a1,a3,b))
+rref(cbind(a1,a4,b))
+rref(cbind(a2,a3,b))
+rref(cbind(a2,a4,b))
+rref(cbind(a3,a4,b))
+
+```
+
+```{r}
+# Chapter 2 application example
+
+# Import lpSolve package
+library(lpSolve)
+
+# Network flow example
+
+# Assumes non-negative solutions!
+
+# Set coefficients of the objective function
+f.obj <- c(1,1,rep(0,8))
+
+# Set matrix corresponding to coefficients of constraints by rows
+f.con <- matrix(c(1,0,-1,-1,-1,rep(0,5),
+                  0,1,1,0,0,-1,1,rep(0,3),
+                  0,0,0,1,0,0,-1,1,-1,0,
+                  0,0,0,0,1,1,0,-1,0,-1,
+                  1,rep(0,9),
+                  0,1,rep(0,8),
+                  0,0,1,rep(0,7),
+                  0,0,0,1,rep(0,6),
+                  rep(0,4),1,rep(0,5),
+                  rep(0,5),1,rep(0,4),
+                  rep(0,6),1,rep(0,3),
+                  rep(0,7),1,rep(0,2),
+                  rep(0,8),1,0,
+                  rep(0,9),1),
+                nrow = 14, byrow = TRUE)
+
+# Set inequality signs
+f.dir <- c(rep("=",4),rep("<=",10))
+
+# Set right hand side coefficients
+maxflows <- c(3,7,5,2,7,6,1,3,8,2)
+f.rhs <- c(f.con[1:4,] %*% maxflows,
+           2*maxflows)
+
+# Solution to linear program
+result <- lp("max", f.obj, f.con, f.dir, f.rhs)
+
+soln <- result$solution-maxflows # optimal flows in each segment
+
+```

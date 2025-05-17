@@ -1,0 +1,196 @@
+---
+title: "HANDOUT :  Stat 230 - MLR - nested F-tests and Kitchen Sink"
+author: "P.B. Matheson adapted from A.S. Wagaman"
+date: "Blood Pressure and Boston Housing Prices"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r, include=FALSE}
+library(mosaic)
+library(GGally)
+```
+
+## MLR: Nested F-Tests (3.6)
+
+### EXAMPLE 1 - Back to Blood Pressure example from previous lecture
+
+We considered several models to predict blood pressure (BP). Nested F-tests allow us to formally check for significance of the explanatory variables that we add/drop using a nested $F$-test.   
+
+The models are provided here: 
+
+```{r}
+BP <- read.csv("https://pmatheson.people.amherst.edu/stat230/bloodpress.csv")
+#just SLR predicting BP from weight
+fm1 <- lm(BP ~ Weight, data = BP) 
+
+ #full model - using all predictors
+fm.full <- lm(BP ~ ., data = BP)
+
+#3 preds(age, dur -duration of hypertension, stress)
+fm2 <- lm(BP ~ Weight +  Age + Dur + Stress, data = BP) 
+
+#2 predictors (weight and age)
+fm3 <- lm(BP ~ Weight +  Age, data = BP) #2 predictors (weight and age)
+```
+
+Do a pairwise comparison between full model (fm.full) with all six predictors (had pulse and BSA [body surface area] too) and the model with 4 predictors (fm2)
+```{r}
+anova(fm2,fm.full)
+```
+You are testing significance of the GROUP of predictors different in the 2 models.  
+A significant test result means you need the more complicated model (at least one of the predictors in the more complex model has an additional coefficient that is non-zero - but it won't tell you which one!)  
+1) What can we say from this output?
+\vspace{1.0in}
+
+
+\newpage
+
+#### We can run all the nested F tests in one step.
+```{r}
+# Add the models in ascending order of complexity.
+anova(fm1, fm3, fm2, fm.full)
+```
+2. What does this tell us?
+\vspace{1.0in}
+
+
+
+Leads us to question which variable should we add BSA or Pulse or both?  More about that with Added Variable Plots (in 4.1)
+
+### Example 2 - Boston Housing Prices
+
+```{r}
+boston <- read.table("https://pmatheson.people.amherst.edu/stat230/boston.txt", header = T)
+#usingbase R code below to produce a scatterplot matrix because ggpairs takes a while to render
+plot(boston) #note this is *slightly* hard to read - take a peek
+```
+
+Let's work with the subset of predictors we've already identified to predict median value of the home - *medv*. 
+Using the select statement we create a new datafile 'boston2' and now we can use ggpairs with fewer variables.
+ptratio is parent-teacher ration and distance is distance to 5 employment centers.
+
+```{r}
+boston2 <- select(boston, "crime", "nox", "rooms", "age", "distance", "ptratio", "medv") 
+ggpairs(boston2)
+plot(boston2)
+```
+
+3. What do you see in these scatterplots? Which of the variables are most highly correlated with *medv*?    
+\vspace{1.25in}
+   
+#### A First Model
+
+```{r}
+gf_point(medv ~ rooms, data = boston2) %>%
+  gf_lm()
+
+fm1 <- lm(medv ~ rooms, data = boston2)
+msummary(fm1)
+```
+
+4. How well does the SLR model for predicting median value using number of rooms work? 
+\vspace{1.0in}
+
+5. Check the assumptions for SLR. Are they met? (should ask before question #4)
+\vspace{1.0in}
+
+```{r}
+mplot(fm1, which = 1)
+mplot(fm1, which = 2)
+```
+
+
+
+### The Kitchen Sink
+
+Without any intuition, one way to proceed is to simply throw all of the variables into our regression model. This is called our "kitchen sink" model, or just your "full" model.  Note: the full model does NOT contain any interaction or polynomial terms.
+
+```{r}
+# Using the . in the formula interface includes all non-response variables in the data frame
+fm.full <- lm(medv ~ ., data = boston2)
+msummary(fm.full)
+mplot(fm.full, which = 1)
+mplot(fm.full, which = 2)
+```
+
+6. What do you think of the fit of this model? Do you prefer this model over the SLR?
+\vspace{.5in}
+
+```{r}
+cor(boston2)# correlation between every pair of variables in the data set
+```
+
+Note that if not all variables were quantitative or if you just wanted the correlation matrix for a subset of variables, you can use select to isolate the variables you want. 
+
+Let's set up some more models so we can show more nested F testing.
+
+```{r}
+fm2 <- lm(medv ~ crime + nox, data = boston2)
+fm3 <- lm(medv ~ crime + nox + rooms, data = boston2)
+fm4 <- lm(medv ~ crime + nox + age, data = boston2)
+fm5 <- lm(medv ~ crime + nox + age + rooms, data = boston2)
+```
+
+Remember that model 1 (fm1) from before had only rooms in it:
+fm1 <- lm(medv ~ rooms, data = boston2)
+
+and the full model (fm.full) had all 6 predictors:
+fm.full <- lm(medv ~ crime + nox + age + rooms + ptratio + distance, data = boston2)
+
+7a. In which models is model 1 nested?   
+
+7b. In which models is model 2 nested?  
+
+7c. In which models is model 3 nested?  
+
+7d. In which models is model 4 nested?  
+
+7e. In which models is model 5 nested?  
+
+To use the anova command on several models, the entire chain needs to be nested, so here, if we want to include model 1 (fm1), which just had rooms as a predictor, certain models can't be compared (fm2 and fm4). Here is the anova for the comparisons we can do:
+
+```{r}
+anova(fm1,fm3,fm5,fm.full)
+```
+
+8. All three p-values are significant. What does this indicate?
+
+a. Row 2 gives an F statistic of 55.01 and the smallest p-value R can provide. What set of hypotheses are being tested by this row?
+
+b. Row 3 gives an F statistics of 5.82 and a p-value of 0.01618. What set of hypotheses are being tested by this row?
+
+c. The comparison between fm3 and fm5 could also have been accomplished with which procedure?
+
+d. Row 4 gives an F statistic of 55.7 and the smallest p-value R can provide. What set of hypotheses are being tested by this row? 
+
+Finally, notice if you just do a series of pairwise comparisons, your F statistics and p-values will be slightly off from what is reported above for the whole chain, because the df above here are being adjusted for testing multiple models at once. This is usually not a large enough concern to necessitate doing all comparisons pairwise, however, the CONCEPT of multiple testing and adjusting significance levels is one you should work at understanding. 
+
+What this means is that if you were to do separate commands (as shown below), your F test statistics and p values might be different. 
+anova(fm1, fm3)
+anova(fm2, fm4)
+anova(fm3, fm5)
+anova(fm5, fm.full)
+
+
+
+
+OPTIONAL: For the first exercise on BP, you could directly compute the sum of the squares and compare the ANOVA tables for two of the regression models. If interested the R code below compares the full model (fm.full with all predictors) to the model with four predictors (fm2)
+The computations are here for your reference, but the anova command we just learned works well enough for these. 
+```{r}
+SSR.full <- sum((fm.full$fitted.values - mean(BP$BP))^2)
+# same thing
+var(fm2$fitted.values) * (nrow(BP) - 1)
+SSR.reduce <- sum((fm2$fitted.values - mean(BP$BP))^2)
+SSR.full - SSR.reduce 
+```
+

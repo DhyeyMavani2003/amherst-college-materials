@@ -1,0 +1,82 @@
+[
+  {
+    "input": [
+      2
+    ], 
+    "number": 1, 
+    "key": 2, 
+    "name": "random 1-bit integer"
+  }, 
+  {
+    "input": [
+      2
+    ], 
+    "number": 2, 
+    "key": 2, 
+    "name": "random 2-bit integer"
+  }, 
+  {
+    "input": [
+      7
+    ], 
+    "number": 3, 
+    "key": 2, 
+    "name": "random 3-bit integer"
+  }, 
+  {
+    "input": [
+      13
+    ], 
+    "number": 4, 
+    "key": 2, 
+    "name": "random 4-bit integer"
+  }, 
+  {
+    "input": [
+      25
+    ], 
+    "number": 5, 
+    "key": 3, 
+    "name": "random 5-bit integer"
+  }, 
+  {
+    "input": [
+      41
+    ], 
+    "number": 6, 
+    "key": 2, 
+    "name": "random 6-bit integer"
+  }, 
+  {
+    "input": [
+      102
+    ], 
+    "number": 7, 
+    "key": 8, 
+    "name": "random 7-bit integer"
+  }, 
+  {
+    "input": [
+      208
+    ], 
+    "number": 8, 
+    "key": 10, 
+    "name": "random 8-bit integer"
+  }, 
+  {
+    "input": [
+      339
+    ], 
+    "number": 9, 
+    "key": 4, 
+    "name": "random 9-bit integer"
+  }, 
+  {
+    "input": [
+      527
+    ], 
+    "number": 10, 
+    "key": 4, 
+    "name": "random 10-bit integer"
+  }
+]

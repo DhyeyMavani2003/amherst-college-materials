@@ -1,0 +1,158 @@
+```{r}
+# CLP example
+
+library(CVXR)
+
+X <- Variable(rows=2, cols=2, PSD = T)
+
+C <- matrix(c(6,1,1,3),nrow=2)
+A1 <- matrix(c(2,1,1,2),nrow=2)
+b <- 2
+
+# objective <- 4*X[1,1]+1*X[1,2]+1*X[2,1]+2*X[2,2]
+objective <- sum(C*X)
+
+# constraint <- 3*X[1,1]+2*X[1,2]+2*X[2,1]+5*X[2,2] == b
+constraint <- sum(A1*X) == b
+
+prob <- Problem(Minimize(objective), list(constraint))
+result <- solve(prob)
+Xmin <- result$getValue(X)
+eigen(Xmin)
+optimal_primal <- result$value # optimal value
+
+# dual problem to the CLP
+
+S <- Variable(rows=2, cols=2, PSD = T) # slack matrix
+y1 <- Variable()
+
+constraint <- y1*A1 + S == C
+
+objective <- b*y1
+
+prob <- Problem(Maximize(objective), list(constraint))
+result <- solve(prob)
+print(y1)
+result$getValue(y1)
+optimal_dual <- result$value # optimal value
+```
+
+```{r}
+# SOCP example
+
+X <- Variable(3) # 3 components
+
+C <- c(1,1,2)
+A1 <- c(1,1,1)
+b <- 1
+
+objective <- sum(C*X)
+
+constraint1 <- sum(A1*X) == b
+constraint2 <- X[3] >= cvxr_norm(X[1:2]) # 2nd order cone
+
+prob <- Problem(Minimize(objective), list(constraint1,constraint2))
+result <- solve(prob)
+Xmin <- result$getValue(X)
+optimal_primal <- result$value # optimal value
+
+# dual problem to the SOCP
+
+S <- Variable(3) # slack matrix
+y1 <- Variable()
+
+constraint1 <- y1*A1 + S == C
+constraint2 <- S[3] >= cvxr_norm(S[1:2]) # 2nd order cone
+
+objective <- b*y1
+
+prob <- Problem(Maximize(objective), list(constraint1,constraint2))
+result <- solve(prob)
+result$getValue(y1)
+print(result$getValue(y1))
+optimal_dual <- result$value # optimal value
+```
+
+```{r facility-locator}
+# Facility location CLP problem
+
+library(CVXR)
+
+# Section 6.2 form of facility location problem
+
+a1 <- c(10,-3)
+a2 <- c(-7,-1)
+a3 <- c(-6,-10)
+a4 <- c(2,-9)
+a5 <- c(6,4)
+a6 <- c(-1,7)
+a7 <- c(-8,1)
+a8 <- c(5,-6)
+
+delta <- Variable(6)
+f <- Variable(2)
+
+obj <- Minimize(sum(delta))
+
+constraints <- list(
+  delta[1] >= cvxr_norm(f-a1), 
+  delta[2] >= cvxr_norm(f-a2), 
+  delta[3] >= cvxr_norm(f-a3),
+  delta[4] >= cvxr_norm(f-a4), 
+  delta[5] >= cvxr_norm(f-a5), 
+  delta[6] >= cvxr_norm(f-a6),
+  delta[7] >= cvxr_norm(f-a7),
+  delta[8] >= cvxr_norm(f-a8)
+)
+
+p <- Problem(obj, constraints)
+solution <- solve(p)  
+
+f <- solution$getValue(f)
+
+plot(c(a1[1],a2[1],a3[1],a4[1],a5[1],a6[1],a7[1],a8[1]),
+     c(a1[2],a2[2],a3[2],a4[2],a5[2],a6[2],a7[2],a8[2]), 
+     xlab="x", ylab="y", pch=19)
+points(f[1],f[2], col="red", pch=15, cex=1.5)
+
+# Section 6.4 form of facility location problem
+
+a1 <- c(9,29)
+a2 <- c(97,19)
+a3 <- c(48,94)
+a4 <- c(7,18)
+a5 <- c(75,1)
+a6 <- c(70,87)
+
+delta <- Variable(6)
+s1 <- Variable(2) 
+s2 <- Variable(2) 
+s3 <- Variable(2)
+s4 <- Variable(2)
+s5 <- Variable(2)
+s6 <- Variable(2)
+f <- Variable(2)
+
+obj <- Minimize(sum(delta))
+
+constraints <- list(
+  s1+f==a1, s2+f==a2, s3+f==a3, s4+f==a4, s5+f==a5, s6+f==a6, 
+  delta[1] >= cvxr_norm(s1), 
+  delta[2] >= cvxr_norm(s2), 
+  delta[3] >= cvxr_norm(s3),
+  delta[4] >= cvxr_norm(s4), 
+  delta[5] >= cvxr_norm(s5), 
+  delta[6] >= cvxr_norm(s6)
+)
+
+p <- Problem(obj, constraints)
+solution <- solve(p)  
+  
+f <- solution$getValue(f)
+
+plot(c(a1[1],a2[1],a3[1],a4[1],a5[1],a6[1]),
+     c(a1[2],a2[2],a3[2],a4[2],a5[2],a6[2]), 
+     xlab="x", ylab="y", pch=19)
+points(f[1],f[2], col="red", pch=15, cex=1.5)
+
+```

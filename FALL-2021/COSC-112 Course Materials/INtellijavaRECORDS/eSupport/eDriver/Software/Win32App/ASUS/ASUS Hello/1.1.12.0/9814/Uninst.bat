@@ -1,0 +1,1 @@
+msiexec.exe /qn /norestart /X{D8CE1923-92A9-4036-817E-9E0D8AA2169B}

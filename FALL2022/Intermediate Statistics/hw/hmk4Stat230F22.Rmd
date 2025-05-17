@@ -1,0 +1,233 @@
+---
+title: "Homework #4 - Stat 230: MLR II - diamonds, doctors and interactions"
+author: "P.B. Matheson adapted from A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, include = FALSE}
+library(mosaic)
+options(digits = 6)
+library(Stat2Data)
+```
+
+### PROBLEMS TO TURN IN: #3.38 (slightly modified), #3.44 (with added part f), #3.46, #3.48,
+
+#### Note: When we fit models, we need to check conditions in order to use the models and do inference. However, here, the focus is on fitting many different models and understanding other regression concepts. Thus, for this assignment ONLY, you only need to check conditions if the problem expressly states that.
+
+#### Exercise 3.38 (slightly modified)
+
+```{r}
+data("Diamonds")
+```
+
+> 3.38 part a:
+
+SOLUTION: A quadratic model using Depth to predict TotalPrice has a Multiple-R-squared of about 4.75 % and Adjusted R-squared of about 4.20 %. We can see that the p-values for Depth and Depth^2 are greater than 0.05 which implies that those terms are not significant.
+
+```{r}
+model1 <- lm(TotalPrice ~ Depth + I(Depth^2), data = Diamonds)
+msummary(model1)
+```
+
+> 3.38 part b:
+
+SOLUTION: A two-predictor model using Carat and Depth to predict TotalPrice has a Multiple-R-squared of about 87 % and Adjusted R-squared of about 87%. We can see that the p-values for Depth and Carat are less than 0.05 which implies that those terms are significant.
+
+
+```{r}
+model2 <- lm(TotalPrice ~ Carat + Depth, data = Diamonds)
+msummary(model2)
+```
+
+> 3.38 part c:
+
+SOLUTION: A three-predictor model using Carat, Depth and their interaction term to predict TotalPrice has a Multiple-R-squared of about 88.998 % and Adjusted R-squared of about 88.903%. We can see that the p-values for Depth, Carat and Carat:Depth are less than 0.05 which implies that those terms are significant.
+
+
+```{r}
+model3 <- lm(TotalPrice ~ Carat * Depth, data = Diamonds)
+msummary(model3)
+```
+
+> 3.38 part d:
+
+SOLUTION: A complete second-order model using Carat and Depth to predict TotalPrice has a Multiple R-squared of about 93.14 % and Adjusted R-squared of about 93.04 %. We can see that the p-values for Carat and Carat^2 are less than 0.05 which implies that those terms are significant. On the other hand, we can see that the p-values for Depth, Depth^2, and Carat:Depth are greater than 0.05 which implies that those terms are not significant. 
+
+
+```{r}
+model4 <- lm(TotalPrice ~ Carat * Depth + I(Carat^2) + I(Depth^2), data = Diamonds)
+msummary(model4)
+```
+
+> unspecified part e: FINAL MODEL CHOICE AND EXPLANATION!
+
+It wants you to also consider the 2 models below fit in a different exercise (from exercise 3.37):
+
+```{r}
+# You may have saved Carat^2 to the data set as a variable above, that's fine.
+# This code is just here so you don't have to fit those models yourself.
+quadCarat <- lm(TotalPrice ~ Carat + I(Carat^2), data = Diamonds)
+msummary(quadCarat)
+cubicCarat <- lm(TotalPrice ~ Carat + I(Carat^2) + I(Carat^3), data = Diamonds)
+msummary(cubicCarat)
+```
+
+You want a model that fits well, but we also prefer simpler models. Try to balance these desires - there are two models here that seem reasonable for final choices based on these criteria. 
+
+SOLUTION: I think the best model is quadCarat because we can see that it has a comparatively high adjusted R-squared while having the simplicity of explainability when compared to other models in the realm above. It is not worth it to trade off simplicity to get around 1% higher adjusted R-squared in the case of the full second-order model. 
+
+
+#### Exercise 3.44
+
+```{r}
+data(MetroHealth83)
+```
+
+> 3.44 part a:
+
+SOLUTION: NumBeds would be a better predictor of SqrtMDs because we can see that it has higher correlation (0.946067) with SqrtMDs than that of NumHospitals (0.904053)
+
+```{r}
+cor(select(MetroHealth83, SqrtMDs, NumHospitals, NumBeds)) #think about why select is used here!
+```
+
+
+> 3.44 part b:
+
+SOLUTION: Variability Explained by Hospitals alone = (0.904053)^2 = 0.817312. But, Variability Explained by Beds alone = (0.946067)^2 = 0.895043
+
+> 3.44 part c:
+
+SOLUTION: 89.6% of the variability is explained by this two-predictor model.
+
+```{r}
+modelFull <- lm(SqrtMDs ~ NumHospitals + NumBeds, data = MetroHealth83)
+msummary(modelFull)
+```
+
+> 3.44 part d:
+
+SOLUTION: Both NumBeds and NumHospitals have significant relationships with SqrtMDs as we can see that the p-values in the individual models are less than 0.05
+
+```{r}
+modelHosp <- lm(SqrtMDs ~ NumHospitals, data = MetroHealth83)
+msummary(modelHosp)
+
+modelBeds <- lm(SqrtMDs ~ NumBeds, data = MetroHealth83)
+msummary(modelBeds)
+```
+
+> 3.44 part e:
+
+SOLUTION: We can see that NumBeds is significant/important predictor in the multiple-regression model since it has a p-value which is less than 0.05. But, NumHospitals is not that important predictor in the given multiple linear regression model as we can see it has a p-value greater than 0.05.
+
+```{r}
+
+modelBoth <- lm(SqrtMDs ~ NumHospitals + NumBeds, data = MetroHealth83)
+msummary(modelBoth)
+```
+
+> 3.44 part f: What might account for the answers to d and e appearing to be inconsistent with each other? Explain. Use addition R procedure here (hint:vif)
+
+SOLUTION: They both have VIFs greater than 5 which means that there is an issue with the multicollinearity as once one of NumBeds/NumHospitals is in the model the second doesn't help us with increasing our explanatory power because they don't give us additional information as they explain the same portion of the variability.
+
+```{r}
+car::vif(modelBoth)
+```
+
+
+
+
+#### Exercise 3.46
+
+SOLUTION:
+
+Our null hypothesis is that all of the terms with Depth in model4 have slopes of 0. The alternative is that at least one term with Depth has a non-zero slope.
+
+The result here (assuming conditions hold) suggests that we want to keep at least one of the terms with Depth, so we need to look at the bigger model (model4).
+
+```{r}
+modelwithoutdepth <- lm(TotalPrice ~ Carat + I(Carat^2), data = Diamonds)
+msummary(modelwithoutdepth)
+
+model4 <- lm(TotalPrice ~ Carat * Depth + I(Carat^2) + I(Depth^2), data = Diamonds)
+msummary(model4)
+
+
+anova(modelwithoutdepth, model4)
+```
+
+
+#### Exercise 3.48
+
+```{r}
+data(RailsTrails)
+```
+
+> 3.48 part a: 
+HINT - a simple t test can be run using: t.test(outcomevarname ~ categoricalvarname, data=yourdatafilename)   
+Of course, you have to type in the right variable names and datafile name.
+
+SOLUTION: We can see that the p-value from the t-test is less than 0.05 which tells us that having a garage is related to the price of home (specifically GarageGroup is related to Adj2007). Also it is clearly evident in the boxplots that they are different for "yes" and "no" values of GarageGroup. We can see that range and third quartile for GarageGroup "yes" is shifted above compared to the GarageGroup "no".
+
+```{r}
+gf_boxplot(Adj2007 ~ GarageGroup, data = RailsTrails)
+t.test(Adj2007 ~ GarageGroup, data=RailsTrails)
+```
+
+> 3.48 part b:
+
+SOLUTION: We can say that the relationship between Distance and Adj2007 is significant since the p-value of Distance term is less than 0.05. Also, we can say that the on average Adj2007 decreases by 54.4272 per unit increase in the Distance. Also, we can see that when Distance is 0, predicted Adj2007 is 388.2038. The equation of the regression line is: $\widehat{Adj2007} = 388.2038 - 54.4272(Distance)$
+
+```{r}
+modelDist <- lm(Adj2007 ~ Distance, data = RailsTrails)
+msummary(modelDist)
+```
+
+> 3.48 part c:
+
+SOLUTION: We can say that the relationship between Distance & Adj2007 and GarageGroup & Adj2007 is significant since the p-values of both terms are less than 0.05. Also, we can say that the on average Adj2007 decreases by 51.0255 per unit increase in the Distance. Also, we can see that when Distance is 0, predicted Adj2007 is 365.1027 in the case when GarageGroup takes the value "no", and the predicted Adj2007 is 402.9949 in the case when GarageGroup takes the value "yes". The equation of the regression line is: $\widehat{Adj2007} = 365.1027 - 51.0255(Distance) + 37.8922(GarageGroupyes)$
+
+```{r}
+modelDistGar <- lm(Adj2007 ~ Distance + GarageGroup, data = RailsTrails)
+msummary(modelDistGar)
+```
+
+> 3.48 part d:
+
+SOLUTION: We can say that the relationship between Distance & Adj2007 is significant since the p-value of Distance term is less than 0.05. The interaction term is not significant as we can see that the p-value of the interaction term is less than 0.05. Also, we can say that the on average Adj2007 decreases by 46.302 per unit increase in the Distance in the case of GarageGroup taking value of "no", but on average Adj2007 decreases by 58.18 per unit increase in the Distance in the case of GarageGroup taking value of "yes". Also, we can see that when Distance is 0, predicted Adj2007 is 359.083 in the case when GarageGroup takes the value "no", and the predicted Adj2007 is 407.944 in the case when GarageGroup takes the value "yes". The equation of the regression line is: $\widehat{Adj2007} = 359.083 - 46.302(Distance) + 48.861(GarageGroupyes) - 9.878(Distance:GarageGroupyes)$
+
+```{r}
+modelDistGar <- lm(Adj2007 ~ Distance * GarageGroup, data = RailsTrails)
+msummary(modelDistGar)
+```
+
+> 3.48 part e:
+
+SOLUTION: Our null hypothesis is that all of the terms with GarageGroup in modelDistGar have slopes of 0. The alternative is that at least one term with GarageGroup has a non-zero slope.
+
+The result here (assuming conditions hold) suggests that we cannot reject the null hypothesis and thus don't want to keep any of the terms with GarageGroup, so we need to look at the simpler model just with Distance.
+
+```{r}
+modelwithoutGar <- lm(Adj2007 ~ Distance, data = RailsTrails)
+msummary(modelwithoutGar)
+
+modelDistGar <- lm(Adj2007 ~ Distance * GarageGroup, data = RailsTrails)
+msummary(modelDistGar)
+
+anova(modelwithoutGar, modelDistGar)
+```
+
+
+
+
+

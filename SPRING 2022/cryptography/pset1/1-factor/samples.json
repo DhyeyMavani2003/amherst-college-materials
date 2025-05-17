@@ -1,0 +1,42 @@
+[
+    {
+        "input": [
+            6
+        ], 
+        "name": "4-bit number (product of two 2-bit primes)", 
+        "key": [
+            2, 
+            3
+        ]
+    }, 
+    {
+        "input": [
+            143
+        ], 
+        "name": "8-bit number (product of two 4-bit primes)", 
+        "key": [
+            11, 
+            13
+        ]
+    }, 
+    {
+        "input": [
+            514727
+        ], 
+        "name": "20-bit number (product of two 10-bit primes)", 
+        "key": [
+            547, 
+            941
+        ]
+    }, 
+    {
+        "input": [
+            578140817927
+        ], 
+        "name": "40-bit number (product of two 20-bit primes)", 
+        "key": [
+            675511, 
+            855857
+        ]
+    }
+]

@@ -1,0 +1,339 @@
+---
+title: "Black Scholes Equation and Formula for Options Pricing: Application of Exponential Brownian Motion and Ito's Calculus"
+subtitle: "Final Project for MATH-365 Stochastic Processes, Spring 2022 (Professor Leise)"
+author: "Dhyey Mavani, Class of 2025, Amherst College"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Traders and investors purchase different assets in the financial market by putting their capital at risk to gain an opportunity to earn high returns. In order to minimize the risk for each value of expected return, derivatives were developed. Derivatives are assets who derive assets from another financial instruments.
+
+Extensive research has already been done to model the movements in the financial markets with stochastic calculus. One of the most famous of these described the Black-Scholes options pricing model. In this paper we will explore how Brownian motion and Ito's calculus can be used to get to the Black-Scholes Equation.
+
+## Useful Financial Nomenclature and Terminology
+
+1. Asset or financial Instrument: An object that provides a claim to future cash flows
+
+2. Underlying asset: the asset from which we are deriving value in form of a derivative
+
+3. Derivative: A financial asset that derives its value from another financial asset
+
+4. Option: A derivative that provides the opportunity, but not the obligation to buy or sell an asset at a predetermined price in the future
+
+5. Exercise price (striking price) is the price that is paid for the asset when the option is exercised.
+
+a) For a call option, if the market price rises above the strike price, the investor will be willing to buy.
+
+b) For a put option, if the market price falls below the strike price, the investor will want to sell the underlying asset.
+
+6. European option is a type of option that can be exercised only on a specified future date. (We will be dealing with European Options in this paper).
+
+## Stochastic Tools
+
+### Log-Normal Distribution (for Black Scholes Formula for calculating option price)
+
+If random variable $Y$ follows the normal distribution with mean $\mu$ and variance $\sigma^2$, then $X = e^Y$ follows the log-normal distribution with mean and variance:
+
+$$E(X) = e^{\mu+ \frac{\sigma^2}{2}}$$
+$$Var(X) = (e^{\sigma^2} - 1)e^{2\mu + \sigma^2}$$
+The probability distribution function for x is...
+
+$$dF_X(x) = \frac{1}{\sigma x\sqrt{2\pi}}e^{\frac{-1}{2}(\frac{lnx - \mu}{\sigma})^2}$$
+
+and the cumulative distribution function for $X$ is 
+
+$$dF_X(x) = \Phi(\frac{lnx - \mu}{\sigma})$$
+
+Now, let's calculate the expected value of $X$ conditional on $X > x$
+
+$$E[X|X > x] = \int_{K}^{\infty} \frac{1}{\sigma \sqrt{2\pi}}e^{\frac{-1}{2}(\frac{lnx - \mu}{\sigma})^2} dx$$
+
+Changing variables as $y = lnx$, $x = e^y$, $dx = e^ydy$, and Jacobian is $e^y$. Therefore, we can rewrite the equation above as...
+
+$$E[X|X > x] = \int_{lnK}^{\infty} \frac{e^y}{\sigma \sqrt{2\pi}}e^{\frac{-1}{2}(\frac{y - \mu}{\sigma})^2} dy$$
+
+$$E[X|X > x] = e^{\mu + \frac{\sigma^2}{2}}\frac{1}{\sigma} \int_{lnK}^{\infty} \frac{1}{\sqrt{2\pi}} e^{\frac{-1}{2}(\frac{y - (\mu+\sigma^2)}{\sigma})^2} dy$$
+
+$$E[X|X > x] = e^{\mu + \frac{\sigma^2}{2}} \Phi(\frac{-lnK + \mu +\sigma^2}{\sigma})$$
+
+### Brownian Motion (for Black Scholes Equation for predicting future option price)
+
+In this model we assume that the price of stocks follow a Brownian motion. No matter how much you zoom in (decrease your time interval) Brownian motion has a property of retaining its fractal-like (non-differentiable) nature.
+
+**Definition: ** A stochastic process $w(t)$ is believed to follow a Brownian motion on $[0,T]$ if the following conditions are satisfied:
+
+1. $w(0) = 0$
+
+2. $w(t)$ is almost surely continuous
+
+3. It is a process with independent increments: variables $w(0)$, $w(t_1)-w(0)$, $w(t_2)-w(t_1)$, ... , $w(t_n)-w(t_{n-1})$ are mutually independent
+
+4. $E(w(t)) = 0$
+
+5. The process $w(t)$ takes on a normal distribution density around its mean.
+
+### The Ito Integral and the Ito Differential
+
+A natural response to a Brownian motion $w(t)$ is the desire to integrate with respect to it. Thus, for a function/process $f$ over a probability space $\omega$, we seek to make sense of the **stochastic integral**
+
+$$\int_{0}^{T}f(t,x)dw(t)$$
+
+Note that with a differential function $g(t)$, we can evaluate the Riemann Steiljes integral of $\int_{0}^{T} f(t)dg(t)$ by using $\lim_{x\to\infty} \sum_{j=0}^{n-1} f(t^*)[g_{t_{j+1}} - g_{t_{j}}]$. Where $t^*$ is a point on the interval $[t_j,t_{j+1})$, and the series converges to the same limit regardless of our selection of $t^*$. With Brownian motion, because of the independent increment quality, $w(t)$ is nowhere differentiable, and thus we cannot evaluate the Riemann Steiljes integral as such. Because the limit of the sum is dependent on our selection of $t^*$, there are as many stochastic integrals as there are selections of $t^*$.
+
+**Definition of Ito's integral: ** It takes our selection of $t^*$ as the left endpoint, $t_j$. We thus have
+
+$$\int_{0}^{T}f(t,x)dw(t) = \lim_{x\to\infty} \sum_{j=0}^{n-1} f(t_j)[w_{t_{j+1}} - w_{t_{j}}]$$
+
+With a stochastic integral, it seems only suitable to have a stochastic differential.
+
+**Definition of Ito's Differential: ** Suppose there exist two functions $u(t)$ and $v(t)$ in $M[0,T]$ such that for all $0 \le t_i \le t_f \le T$,
+
+$$X(t_f) - X(t_i) = \int_{t_i}^{t_f} u(t)dt + \int_{t_i}^{t_f} v(t)dw(t)$$
+
+Then the Ito differential of a process $X(t)$ is defined to be 
+
+$$dX(t) = u(t)dt + v(t)dw(t)$$
+
+### Ito's Lemma
+
+Stochastic calculus contains an analogue to the chain rule in the ordinary calculus. If a process follows exponential Brownian motion, we can apply Ito's Lemma, which states [4]:
+
+**Theorem 3.1: ** *Suppose that the process* $X(t)$ *has a stochastic differential* $dX(t) = u(t)dt + v(t)dw(t)$ *and that the function* $f(t,x)$ *is nonrandom and defined for all t and x. Additionally, suppose* $f$ *is continuous and has continuous derivatives* $f_t(t,x),f_x(t,x),f_{xx}(t,x)$. *Then the stochastic process* $Y(t) = f(t,X(t))$ *also has a stochastic differential which is given by*
+
+$$dY(t) = [f_t(t,X(t))+f_x(t,X(t))u(t)+\frac{1}{2}f_{xx}(t,X(t))v^2(t)]dt + f_x(t,X(t))v(t)dw(t)$$
+
+*or in integral form*
+
+$$Y(t_f) - Y(t_i) = \int_{t_i}^{t_f}([f_t(t,X(t))+f_x(t,X(t))u(t)+\frac{1}{2}f_{xx}(t,X(t))v^2(t)])dt+\int_{t_i}^{t_f}(f_x(t,X(t))v(t))dw(t)$$
+
+The proof of this can be found in [3].
+
+## Black-Scholes Equation
+
+Considering a single stock with price $S(t)$ which is a function of time. According to Almgren [1], the value of the option deriving from that stock should have a market value that is a function of $S(t)$ and $t$. Let's say it is given by the equation: $O(t) = f(t,S(t))$ where $O(t)$ is the market price of the derivative option.
+
+Assuming that, in financial world, the only descriptor of profitability of an instrument is the rate of return, in order to describe the perturbations of the return on a share of a financial instrument (stock in this case), we will use a *exponential Brownian motion*.
+
+A process takes on exponential Brownian motion if its logarithm follows a Brownian motion. This means that onlt fractional changes take place as random variation. If we denote the changes as differential we can say that: $dS = AS(t)dt + BS(t)dw(t)$, where $A$ and $B$ are constants and $w(t)$ is a Brownian motion.
+
+By Ito's lemma:
+
+$$dO = [f_t + ASf_s + \frac{B^2S^2f_{SS}}{2}]dt + [BSf_S]dw(t) = [f_t+\frac{B^2S^2f_{SS}}{2}]dt + f_SdS$$
+
+Considering an investor who holds a portfolio of the stock and its option, $P(t) = N_1(t)S(t) + N_2(t)O(t)$
+
+The differential is:
+
+$$dP = N_1dS + N_2dO = N_1dS + N_2[f_t+\frac{B^2S^2f_{SS}}{2}]dt + N_2f_SdS$$
+
+Malliaris [5] then makes the clever argument of holding a ration of stock to derivative of $\frac{N_1}{N_2} = -f_S$ (this is know as the delta hedging), so that $N_1dS + N_2f_SdS = 0$.
+
+This implies that:
+
+$$dP = N_2[f_t+\frac{B^2S^2f_{SS}}{2}]dt$$
+ 
+which is completely independent of Brownian motion (there is no $dw(t)$ term, explicit or implicit). As a result it can be considered "riskless". By the efficient market hypothesis, the return on this riskless asset must be equal to that on any other riskless asset, more specifically a government bond. Let the return on the government bond be $R_b(t)$. then we have:
+
+$$\frac{dP}{P} = \frac{N_2[f_t+\frac{B^2S^2f_{SS}}{2}]dt}{N_1S + N_2} = R_bdt$$
+
+If we rearrange and normalize so that $N_2 = 1$, thus making $N_1 = -f_S$, we get
+
+$$(f_t+\frac{B^2S^2f_{SS}}{2})dt = (-f_SS + f)R_bdt$$
+
+OR
+
+$$f_t+\frac{B^2S^2f_{SS}}{2} + R_bf_SS = R_bf$$
+
+Which is the Black-Scholes differential equation for option pricing. This helps investors in estimating the future prices of an option so that they can build a profitable portfolio.
+
+## Black Scholes Formula
+
+The value of an European call option ($C_0$) can be calculated given its stock price ($S_0$), exercise price ($X$), time to expiration ($T$), standard deviation of log returns ($\sigma$), and risk-free interest rate ($r$). Assume that the option satisfies the following conditions:
+
+a) The short-term interest rate is known and is constant through time.
+
+b) The stock price follows a random walk in continuous time with a variance rate proportional to the square of the stock price. Thus the distribution of possible stock prices at the end of any finite interval is log-normal. The variance rate of the return on the stock is constant.
+
+c) The stock pays no dividends or other distributions.
+
+d) The option is ”European,” that is, it can only be exercised at maturity.
+
+e) There are no transaction costs in buying or selling the stock or the option.
+
+f) It is possible to borrow any fraction of the price of a security to buy it or to hold it, at the short-term interest rate.
+
+g) There are no penalties to short selling. A seller who does not own a security will simply accept the price of the security from a buyer, and will agree to settle with the buyer on some future date by paying him an amount equal to the price of the security on that date.
+
+Then, the price can be calculated by
+
+$$C_0 = S_0\Phi(d_1) - Xe^{-rT}\Phi(d_2)$$
+
+where,
+
+$$d_1 = \frac{ln(\frac{S_0}{X}) + (r+\frac{\sigma^2}{2})T}{\sigma\sqrt{T}}, d_2 = \frac{ln(\frac{S_0}{X}) + (r-\frac{\sigma^2}{2})T}{\sigma\sqrt{T}} = d_1 - \sigma\sqrt{T}$$
+
+and $\Phi(x)$ represents cumulative distribution function for the normally distributed random variable $x$
+
+We will try to prove this Theorem below...
+
+Calculating for the present value of the expected return of the option, we get:
+
+$$C_0 = e^{-rT}E^Q[(S_0 - X)^+|F_0]$$
+
+Now, let's try to calculate the expected value using integration...
+
+$$C_0 = e^{-rT}\int_X^{\infty}(S_0-X)dF(S_0)$$
+
+$$C_0 = e^{-rT}\int_{X}^{\infty} S_0dF(S_0) - e^{-rT}X\int_{X}^{\infty}dF(S_0)$$
+
+Now note that the the distribution of possible stock prices at the end of any finite interval is log-normal. Therefore, recall equation of Expected values from Stochastic Tools to evaluate the first integral in the above equation.
+
+$$C_0 = e^{-rT}e^{lnS_0+(r-\frac{\sigma^2}{2})T + \frac{\sigma^2T}{2}}\Phi(\frac{-lnX+lnS_0+(r-\frac{\sigma^2}{2})T+\sigma^2T}{\sigma\sqrt{T}})- e^{-rT}X\int_{X}^{\infty}dF(S_0)$$
+
+$$C_0 = e^{-rT}S_0e^{rT}\Phi(d_1) - e^{-rT}X\int_{X}^{\infty}dF(S_0)$$
+
+$$C_0 = S_0\Phi(d_1) - e^{-rT}X\int_{X}^{\infty}dF(S_0)$$
+
+Now let's try to calculate the second integral...
+
+$$C_0 = S_0\Phi(d_1) - e^{-rT}X[1-F(X)]$$
+
+$$C_0 = S_0\Phi(d_1) - e^{-rT}X[1-\Phi(\frac{lnX-lnS_0-(r-\frac{\sigma^2}{2})T}{\sigma\sqrt{T}})]$$
+$$C_0 = S_0\Phi(d_1) - e^{-rT}X[1-\Phi(-d_2)]$$
+
+$$C_0 = S_0\Phi(d_1) - e^{-rT}X\Phi(d_2)$$
+
+Hence, Proved.
+
+## An Example of Using Black Scholes Formula in Using Numbers 
+
+Let's try to find a price of an European call option with stock price of $\$90$, time of expiration being 6 months, risk-free interest rate is 8%, standard deviation of stock is 23%, exercise price is $\$80$.
+
+Hence, $S_0 = 90$, $T = 0.5$, $r = 0.08$, $\sigma = 0.23$, and $X = 80$, plug in those values in the Black-Scholes formula to get 
+
+$$C_0 = 90*\Phi(d_1) - 80*e^{-0.08*0.5}*\Phi(d_2)$$
+
+where,
+
+$$d_1 = \frac{ln(\frac{90}{80})+(0.08+\frac{0.23^2}{2})0.5}{0.23\sqrt{0.5}} = 1.0515$$
+$$d_2 = \frac{ln(\frac{90}{80})+(0.08-\frac{0.23^2}{2})0.5}{0.23\sqrt{0.5}} = 0.8889$$
+
+Using standard normal distribution we can get the following values:
+$$\Phi(d_1) = 0.8535\\ \Phi(d_2) = 0.813$$
+
+Therefore, the value of the option $C_0$ can be calculated as follows:
+
+$$C_0 = 90*0.8535-80*e^{-0.08*0.5}*0.813 = 14.33$$
+
+Black and Scholes have done empirical tests of Black-Scholes formula on a large body of call-option data. Although the formula gave a good approximation, they found that the option buyers pay prices consistently higher than those predicted by the formula.
+
+Let’s think about the reason behind such a discrepancy. In the real market, real interest rates are not constant as assumed in Black-Scholes model. Most stocks pay some form of distributions including dividends. Due to such factors, volatility ($\sigma$) in Black-Scholes formula may be underestimated. Since the price of an option ($C_0$) is a monotonically increasing function of the volatility ($\sigma$), such a difference in volatility could be one of the reasons for underestimation of option prices.
+
+## Simulation and Exploration of Black Scholes in R while trying to estimate the Volatility
+
+```{r echo = FALSE}
+# my NASDAQ API key: GqR4LqnaLPsXv9tqYCea
+```
+
+```{r message = FALSE}
+# my NASDAQ API key: ---(REDACTED)---
+library(Quandl)
+library(dplyr)
+
+BlackScholesFormula <- function(S, K, r, T, sigma, type){
+  
+  if(type=="Call"){
+    d1 <- (log(S/K) + (r + sigma^2/2)*T) / (sigma*sqrt(T))
+    d2 <- d1 - sigma*sqrt(T)
+    
+    value <- S*pnorm(d1) - K*exp(-r*T)*pnorm(d2)
+    return(value)
+  
+  } else if(type=="Put"){
+    d1 <- (log(S/K) + (r + sigma^2/2)*T) / (sigma*sqrt(T))
+    d2 <- d1 - sigma*sqrt(T)
+    
+    value <-  (K*exp(-r*T)*pnorm(-d2) - S*pnorm(-d1))
+    return(value)
+  }
+}
+
+call <- BlackScholesFormula(110,100,0.04,1,0.2,"Call")
+put <- BlackScholesFormula(110,100,0.04,1,0.2,"Put")
+
+# Get the Close column(4) from the WIKI dataset from Quandl of the APPL stock 
+
+data <- Quandl("WIKI/AAPL.4")
+
+# Retrieve the first 50 values
+
+recent_data <- data[1:500,]
+
+# Use the arrange function from dplyr package to get old values at top. 
+# This would guarantee that the calculations are performed 
+# with the oldest values of the series at first.
+
+recent_data <- arrange(recent_data, -row_number())
+
+# Add a new column with the returns of prices. 
+# Input NA to the first value of the column in order to fit the column 
+# in the recent_data data frame.
+
+recent_data$returns <- c('NA',round(diff(log(recent_data$Close)),3))
+
+# Convert the column to numeric
+
+recent_data$returns <- as.numeric(recent_data$returns)
+ 
+# Calculate the standard deviation of the log returns
+
+standard_deviation <- sd(recent_data$returns,na.rm=TRUE)
+
+annual_sigma <- standard_deviation * sqrt(250)
+
+annual_sigma
+
+```
+
+## Conclusion
+
+Almgren and Malliaris both serve to elucidate the connection between stochastic processes and financial asset valuation and deepen the insight provided orginally by Black and Scholes. The crux of the argument lies with Ito's lemma, which allows one to value an asset whose value is a random Brownian function of another asset. While Ito's original formula was developed for more scientific fields, it has found a niche in financial analysis these days. 
+
+In their original thesis, Black Scholes further solve their differential equation with condition that $f(t,S=0) = 0$, and $F(T,S) = max[0,S-E]$, where $T$ is the exercise date for the option, and $E$ is the exercise date indicated in the contract. As a result of the Black Scholes equation, the application of stochastics to finance has been reinvigorated and today it has been applied to a plethora of financial assets.
+
+## Future Exploration
+
+These days, multi-billion-dollar market-making firms like Jane Street, Akuna Capital and Citadel Securities use advanced stochastic analysis and black-scholes to identify arbitrage opportunities and make money by estimating the option's fair price at a given time more and more accurately and precisely. This can be a topic of future exploration in a whole another paper. Also, it would be a good idea to see how we can use sentiment analysis of data from public sources like Twitter to arrive at a better estimate of volatility of certain stock ticker's associated options, which would help make our predictions of options fair price be much more accurate.
+
+[Update]: I have got around to creating a "Twitter Sentiment To Volatility Trade Recommender" using Python, Twitter API and VADER Sentiment Analysis as an much awaited exploratory extension to this project. The code for the same can be accesses at https://github.com/DhyeyMavani2003/Twitter-Sentiment-to-Volatility-Trade-Recommender 
+
+## Acknowledgements
+
+It is a pleasure to thank my mentor and professor, Tanya Leise, for all her help in writing this paper through her teachings in the MATH-365 Stochastic Processes course in Spring 2022 at Amherst College.
+
+## Bibliography
+
+[1] R. Almgrem. Financial derivatives and partial differential equations. The American Mathematical Monthly, 109(1):1-12, 2002.
+
+[2] F. Black and M. Scholes. The pricing of options and corporate liabilities. The Journal of Political Economy, 81(3):637-654, 1073.
+
+[3] I. Gikhman and A. Skorokhod. Introduction to the Theory of Random Processes. W. B. Saunders Company, 1969.
+
+[4] K. Ito. On stochastic differntial equations. Memoirs, American Mathematical Society, (4):1-51, 1951.
+
+[5] A. Malliaris. Ito's calculus in financial decision making. SIAM Review, 25(4):481-496, 1983.
+
+[6] Gregory F. Lawler. Stochastic Calculus: An Introduction with Applications, 2014.
+
+[7] Panayotis Mertikopoulos. Stochastic Perturbations in Game Theory and Applications to Networks. National and Kapodistrian University of Athens. 2010.
+
+[8] Gregory F. Lawler. Introduction to Stochastic Processes, Second Edition, 2006. 
+
+
+
+

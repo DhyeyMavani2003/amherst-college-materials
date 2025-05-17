@@ -1,0 +1,224 @@
+---
+title: "HANDOUT 2 - Logistic Regression:Whickham example - Stat 230 (C9.1-9.3)"
+author: "P.B. Matheson adapted from S.M.Liao & A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+
+---
+
+
+
+```{r, include = FALSE}
+library(mosaic)
+library(mosaicData)
+library(Stat2Data)
+library(lmtest)  
+```
+
+# Logistic Regression using *Whickham* data set
+
+The data in the **Whickham** data set (built into **mosaicData**) contains observations about women, and whether they were alive 20 years after their initial observation.   
+
+```{r}
+data(Whickham)
+head(Whickham)
+#help(Whickham)  Run this command in the console to see more about the study
+```
+
+## Example 1: Is smoking related to survival? some manual calculations! 
+```{r}
+tally (~outcome + smoker, margins=TRUE, data=Whickham) #produces 2x2 contingency table
+```
+
+1a) Calculate the observed probability $\hat{p}$ of survival for smokers and non-smokers.
+
+\vspace{.5in}
+
+1b) Calculate the empirical (observed) odds of survival for smokers and non-smokers.
+
+\vspace{.5in}
+
+1c) Calculate the empirical logit for smokers and non-smokers.
+
+\vspace{.5in}
+
+1d) Calculate and interpret the odds ratio (OR) for smokers survival odds to non-smokers survival odds.
+
+
+\newpage
+1e) Draw the empirical logit plot.  
+
+
+1f) Here is a nice mosaicplot to see the relationship.
+```{r}
+mosaicplot(~smoker + outcome, data=Whickham)
+```
+
+1g) Create a logistic regression to model outcome (alive?) by smoking.  
+
+In order to proceed we need to add the numeric equivalent for the $outcome$ variable in order to run logistic regression. We can't use ("Alive" and "Dead"). The next command transforms outcome to be a 0/1 variable where alive is success. 
+NOTE: If you did not do this and just ran the logistic regression on outcome it would have modeled the probability of being dead since "Alive" would have been the default reference group.
+```{r}
+Whickham <- mutate(Whickham, isAlive=ifelse(outcome=="Alive",1,0))
+head(Whickham) #always check to see if your mutation worked the way you intended
+tally (~isAlive, data=Whickham)
+```
+
+Now we can use the new numeric variable *isAlive* instead of outcome.   
+
+```{r}
+smoking<-glm(isAlive ~ smoker, data=Whickham, family=binomial(logit))
+msummary(smoking)
+```
+
+2. Interpret the model summary.
+
+2a) Write the fitted logistic regression model.
+
+\vspace{.5in}
+
+
+2b) Calculate the estimated odds of survival for smokers and non-smokers.
+
+\vspace{.5in}
+
+2c) Calculate the estimated Odds Ratio (OR) between smokers and non-smokers.
+
+\vspace{.5in}
+
+2d) How do the empirical odds and OR from question 1 compare to the estimated ones here?
+
+\vspace{.5in}
+
+2e) Interpret the fitted slope, $\hat\beta_1 = 0.3786$. This estimate tells us that the *odds* ratio (OR) between smokers and non-smokers is $e^{\hat\beta_1} = exp(0.3786) = 1.46$. 
+Remember that e to the slope gives us the OR.
+
+\vspace{.5in}
+
+2f) Interpret in words!
+
+\vspace{.5in}
+
+
+If you interpreted it properly (see below), this is surprising and ODD!   
+*The smokers' survival odds are about $1.46$ times that for non-smokers*, or equivalently, *the survival odds for smokers are about 46% higher than the survival odds for non-smoker*.      
+
+
+Sounds odd? We should probably take a look at the other predictor, `age`.      
+
+
+\newpage
+## Example 2: Using age (quantitative predictor) to predict survival.
+How does $age$ relate to the probability of being alive?  Note that `age` is a quantitative predictor.
+
+Plotting the data.
+```{r}
+gf_point(outcome ~ age, data = Whickham, alpha = 0.5, color = ~ smoker)
+```
+
+It is very difficult to discern much because we have over 1300 observations and they are stepping on each other in the graph. We can fix this a bit by jittering the points in the $y$-direction. This will move the points up and down a bit so we can visualize the relationship between smoking and outcome.
+
+```{r}
+gf_point(jitter(isAlive) ~ age, data = Whickham, alpha = 0.5, color = ~ smoker)
+```
+
+We already know that a linear model is not appropriate here. 
+You can see how the linear model produces coefficients that predicts values that are beyond zero and one. 
+
+```{r}
+gf_point(jitter(isAlive) ~ age, data = Whickham, alpha = 0.5, color = ~ smoker, 
+         title="Inappropriate Linear Regression model") %>%
+  gf_lm()
+```
+
+One way to make sense of a binary response variable with a quantitative predictor is to **bin** the quantitative predictor (meaning to break it up into equal groups) and then compute the (observed) *proportion* of the response within each bin.      
+```{r}
+Whickham <- mutate(Whickham, ageGroup = cut(age, breaks=10))   ##break `age` in 10 bins 
+favstats(isAlive ~ ageGroup, data = Whickham)
+```
+
+This illustration can help us see how the logistic curve fits through the curse of points of observed proportions.        
+
+```{r, fig.height=2.6}
+binned.y <- mean(isAlive ~ ageGroup, data = Whickham)
+binned.x <- mean(age ~ ageGroup, data = Whickham)
+gf_point(binned.y ~ binned.x, size =3, col="orange", 
+         ylab = "Observed survival probability", xlab = "Age")
+```
+   
+Let's fit a logistic regression model using `age` as the predictor:    
+
+```{r}
+age <- glm(isAlive ~ age, data = Whickham, family = binomial)
+msummary(age)
+```
+
+3. Interpret the logistic regression model using age to predict survival.
+
+3a) What is the fitted model?
+
+\vspace{.5in}
+
+Let's add the fitted model *curve* on the previous scatterplot:    
+
+```{r, fig.height=2.6}
+fit3 <- makeFun(age)
+gf_point(binned.y ~ binned.x, size =3, col="orange", 
+         ylab = "Observed survival probability", xlab = "Age") %>%
+  gf_fun(fit3(age = x) ~ x, color = "red", xlim = c(20, 82))    
+```
+
+
+3d) How do the **estimated probabilities** (represented as the red fitted curve) match with the **empirical probabilities** (the orange points)? 
+
+
+
+*** If we had a binary predictor, linearity would be automatic (b/c 2 pts determine a line)
+
+
+
+\vspace{1in}
+
+Since logistic regression assumes that the logit transformation of probabilities is a *linear* function of the predictors, we need to look at the logit function vs. the predictor `age` here to check for a **linear** pattern. Yes, we are talking about the **Conditions** again, and here is how to make such a plot. We can plot the logit function vs. the predictor to see if we have a linear pattern and if we can proceed.
+
+This is how to generate the **empirical logit plot**.
+There are easier ways and you'll see that later on. For now we can check and see that indeed, it is linear enough.
+
+```{r warning=FALSE, fig.height=2.7}
+gf_point(logit(binned.y) ~ binned.x, size = 5, color = "orange", title="Empirical logit plot",
+         xlab = "Temperature", ylab = "Log(Odds)") %>% 
+  gf_lm()
+```
+
+This**Empirical logit plot** is used to check for the *linearity* condition. Here is an easier way to make an empirical logit plot via the function `emplogitplot1()` in the *Stat2Data* package.  (must have loaded the Stat2Data to run the next command)
+
+```{r}
+emplogitplot1(isAlive ~ age, data = Whickham, ngroups = 10)
+```
+
+Keep in mind that this function is creating *groups of roughly the same number of cases*, and that's why the above two plots are NOT identical, even if we've set the number of bins (`ngroups`) to be 10 in `emplogitplot1()`. When checking the **Linearity** condition, you'll want to play around with different number of bins/breaks and make sure that there is a linear pattern between log-odds and the predictor, regardless of `ngroups` number.             
+
+```{r}
+emplogitplot1(isAlive ~ age, data = Whickham, ngroups = 20)
+emplogitplot1(isAlive ~ age, data = Whickham, ngroups = "all")
+## You can use `ngroups = "all"` to plot a point for each unique value of the predictor.   
+```
+
+4. What else do we need to consider moving forward with a logistic regression model? Are there other conditions we need to check besides *Linearity*?   
+
+Three of the conditions we require for linear regression have analogs for logistic models:
+
+* Linearity of the *logit* (or $\log{(odds)}$). Use empirical logit plot to check.
+* Independence
+* Random
+
+  
+

@@ -1,0 +1,260 @@
+---
+title: "Stat230 HANDOUT-Simple Linear Regression (SLR) in R review"
+author: "P.B. Matheson adapted from A.S. Wagaman"
+date: "Feb 9, 2022"
+output:
+  pdf_document:
+    fig_height: 2
+    fig_width: 4
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include = FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+library(mosaic)
+library(readr) 
+library(broom)
+```
+
+#### R Markdown notes: 
+We install the readr package. The goal of 'readr' is to provide a fast and friendly way to read rectangular data (like 'csv', 'tsv', and 'fwf'). It is designed to flexibly parse many types of data found in the wild, while still cleanly failing when data unexpectedly changes.
+We also install the broom package. The broom package takes the messy output of built-in functions in R, such as lm , nls , or t. test , and turns them into tidy tibbles. 
+
+### SLR Review - CHOOSE-FIT-ASSESS-USE  - How is price related to the quality of food in NYC?
+
+The Zagat guide contains restaurant ratings and reviews for many major world cities.  Assume that you are
+heading to New York City, and want to take your significant other out for a meal.  Being a good analyst,
+you do some research prior to the trip.  To understand variation in the average *Price* of a dinner in Italian restaurants in New York City, we want to know how customer ratings (measured on a scale of 0 to 30) of the *Food* is associated with the average *Price* of a meal. The data contains ratings and prices for 168 Italian restaurants in 2001.
+
+```{r, message = FALSE, warning = FALSE}
+NYC <- read_csv("https://pmatheson.people.amherst.edu/nyc.csv")
+summary(NYC) #provides a basic summary -
+   #can be lengthy and providing means/sds for non quantitative data (see EAST) is wrong
+   #just because it's in the output doesn't mean it's correct.  YOU MUST BE THE JUDGE OF THAT.
+glimpse(NYC) #quick glimpse
+```
+
+#### PRELIMINARY ANALYSIS: 
+We should check basic univariate descriptive statistics and the correlation between Food and Price before fiting the linear regression model. 
+
+```{r}
+favstats(~ Price, data = NYC)
+gf_dens (~Price, data=NYC)
+favstats(~ Food, data = NYC)
+gf_dens (~Food, data=NYC)
+cor(Price ~ Food, data = NYC, use = "pairwise")
+```
+1. Describe the data for price and food based on shape, center and spread.  
+
+> ANSWER
+.  Both graphs are relatively normal
+.  Center of Food is at 20.5 and Center of Price is at 43
+.  
+.  
+.  
+
+\newpage
+
+2. Does the correlation agree with what you observed in the scatterplot?  
+
+> ANSWER 
+.  
+.  
+.  
+.  
+
+
+
+
+
+
+
+#### CHOOSE 
+
+To determine if simple linear regression is appropriate, we return to the scatterplot. 
+There are many ways to generate scatterplots in R, but we are using ggformula syntax here adding a regression line and labels.  
+
+```{r}
+#basic scatterplot with labeled axes
+gf_point(Price ~ Food, data = NYC) %>%
+  gf_labs(x = "Food Rating", y = "Average Price")
+```
+
+3. Does linear regression appear to be appropriate? 
+
+> ANSWER  
+.  
+.  
+.  
+.  
+.  
+.  
+
+```{r}
+#scatterplot with regression line
+gf_point(Price ~ Food, data = NYC) %>%
+  gf_labs(x = "Food Rating", y = "Average Price") %>%
+  gf_lm()
+```
+
+Let's fit the linear model. We have to get information about the model coefficients, error and variance accounted for.
+
+#### FIT
+
+```{r}
+fm <- lm(Price ~ Food, data = NYC)
+#fm is just a name we gave to the model
+#you can change the name from fm (fitted model) but need to be consistent throughout code
+msummary(fm) #reports the summary; msummary and summary are very similar
+```
+
+The typical output contains the slope and intercept estimates as well as their standard errors,associated t-statistics, and p-values assuming conditions for inference are met. We also see the R squared and residual standard error reported below the coefficients box. 
+
+We can get confidence intervals for the regression coefficients, those are obtained with:
+
+```{r}
+confint(fm, level = 0.95) #you can adjust the level
+```
+
+Let's see how well does our model fit the data? Time to turn to the ASSESS phase. 
+
+#### ASSESS
+
+Start with the normality condition of the errors.
+
+```{r}
+#easiest way to get QQplot for residuals
+mplot(fm, which = 2)
+
+#generates a histogram with fitted density curve
+gf_dhistogram(~ residuals(fm), xlab = "Residuals") %>%
+  gf_dens()
+```
+
+4. What do these plots suggest to you about whether this condition is satisfied? Are the errors normally distributed? Centered at zero and show no pattern?
+
+> ANSWER  
+.  
+.  
+.  
+.  
+.    
+
+Next, we can check the condition of equal/constant variance of errors (as well as sometimes seeing issues with linearity) by checking the residual versus fitted plots.
+
+You can make the residual vs. fitted plots multiple ways (2 are shown below)
+
+```{r}
+#easiest way
+mplot(fm, which = 1)
+
+#Plot using Y~X format
+gf_point(residuals(fm) ~ fitted(fm)) %>%
+  gf_labs(x = "Predicted Values", y = "Residuals") %>%
+  gf_lm() %>% gf_smooth(method = "loess", se = FALSE)
+```
+
+5. What do these plots suggest to you about whether the constant variance and linearity conditions are satisfied?
+
+> ANSWER  
+.  
+.  
+.  
+.  
+.  
+.  
+6. Which condition are we unable to check with graphs?
+
+> ANSWER  
+.  
+.  
+.  
+.  
+.  
+.  
+
+#### USE
+
+Let's interpret the regression coefficients. You should be comfortable interpreting the slope and intercept from Stat 101.
+
+The slope here of 2.939 says that we expect the average Price of a meal at Italian restaurants to increase by 2.939 dollars for each one additional rating point. 
+
+7. Would you want to interpret the intercept of -17.832? 
+
+> ANSWER
+  
+.  
+.  
+.  
+.  
+.  
+.  
+Let's try obtaining a predicted value from the model? There are multiple ways to do this, but the easiest way is to create a function that computes it.
+
+```{r}
+#creates a function that computes predicted values
+fit.price <- makeFun(fm)  #fit.price is a name we gave to the function, you can call it anything you want
+ #just stay consistent throughout the R code when referring to this model.
+#obtain the predicted value of Price when Food is 23 - USE
+fit.price(Food = 23)
+```
+
+The *augment* function in the broom package is another way we can get predicted values easily IF the value of interest for a variable is already in the data set. *augment* saves fitted values and residuals for the model and the data set used (which removes observations with missing values for the variables used) to a new data set that you can look at. 
+
+```{r}
+augmentNYC <- augment(fm)
+head(augmentNYC)
+```
+
+Here, to find a prediction for when Food is 23, we just have to find an observation with Food of 23, which looks to happen for observation 21. (Found by just viewing the data set.)
+
+```{r}
+augmentNYC[21, ] #says give row 21, but all columns
+```
+
+8. What is the predicted price for dinner when the food rating is 23?
+
+> ANSWER  
+.  
+.  
+.  
+.  
+.  
+.  
+How is the rating of food related to price? Our ASSESS step showed no major problems with conditions for inference, so we can use the R output to perform the t-test for slope, or use a confidence interval.
+
+```{r}
+msummary(fm)
+confint(fm)#default level is .95
+```
+
+9.Is *Food* is a significant predictor of *Price*. 
+
+> ANSWER (hint: look at both the p value for the t-test and the confidence interval)  
+.  
+.  
+.  
+.  
+.  
+.  
+10. How would you interpret the Confidence interval and Confidence level?
+
+> ANSWER  
+.  
+.  
+.  
+.  
+.  
+.  
+
+
+
+
+

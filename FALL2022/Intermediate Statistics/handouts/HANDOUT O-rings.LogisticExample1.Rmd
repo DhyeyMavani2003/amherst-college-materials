@@ -1,0 +1,207 @@
+---
+title: "HANDOUT: Introduction to Logistic Regression (shuttle o-rings)"
+author: "P.B. Matheson adapted from Shu-Min Liao"
+date: " "
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+```{r include=FALSE}
+# Don't delete this chunk if you are using the mosaic package
+# This loads the mosaic and dplyr packages
+require(mosaic)
+require(Stat2Data)
+require(car)  #for logit
+```
+
+```{r include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+
+# This changes the default colors in lattice plots.
+trellis.par.set(theme=theme.mosaic())  
+
+# knitr settings to control how R chunks work.
+require(knitr)
+opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small"    # slightly smaller font for code
+)
+# This loads the mosaic data sets.  (Could be deleted if you are not using them.)
+require(mosaicData)     
+options(digits=3)  
+```
+
+
+## O-rings Example
+
+On January 28, 1986, the NASA space shuttle program launched its 25th shuttle flight from Kennedy Space Center with disastrous results. The ambient temperature was 36 degrees Fahrenheit. 
+
+We have data on the the first 23 Shuttle launches recorded in the shuttle.csv file. NOTE: Success = 1 represents a launch with no damage to any of the 6 O-rings.
+
+```{r}
+shuttle <- read.csv("https://pmatheson.people.amherst.edu/stat230/shuttle.csv")
+head(shuttle)
+```
+
+### EDA 
+
+
+```{r}
+tally(~Success, data=shuttle)
+tally(~Success, format="proportion",data=shuttle)
+```
+
+Examine the relationship between ambient temperature at the time of launch (in degrees Fahrenheit) and whether or not the launch was successful, using some numeric summaries and graphs.  
+```{r fig.height=2.2}
+favstats(Temperature ~ as.factor(Success), data = shuttle)
+gf_boxplot(factor(Success) ~ Temperature, data = shuttle)
+```
+
+1) What do you notice?  Does it appear that temperature is related to success? 
+
+\vspace{.5in}  
+
+
+### 
+
+The response variable here is `Success` (damage to any of the 6 O-rings after launch?) and the explanatory variable is `Temperature` (ambient temperature at launch). Note that `Success` is *binary* and coded *numerically* (as it takes on the value 0 or 1). The raw data can be seen via the scatterplot below:   
+  
+```{r fig.height = 2.6}
+gf_point(Success ~ Temperature, data = shuttle) %>%
+    gf_lims(x = c(45, 90), y = c(-0.5, 1.5))
+```
+
+### What happens if we try to fit a Linear Regression Model to answer the question, "Are successful launches more likely with higher ambient temperatures at the time of launch?"     
+
+Upon first glance, it may appear as if we can go ahead and use linear regression since `Success` is encoded as a numeric variable. What would this look like if we add the fitted regression line?
+
+```{r fig.height = 2.6}
+gf_point(Success ~ Temperature, title = "Simple linear regression model (m1)", data = shuttle) %>%
+  gf_lm()  %>%
+  gf_lims(x = c(45, 90), y = c(-0.5, 1.5))
+```
+
+2) Is this a good model? 
+
+\vspace{.5in}  
+
+
+3) Why not?   
+
+a. We are making *unreasonable* estimates for the outcome of `Success` at `Temperature` > 80 degrees (can we predict `Success` as more than 1?) and we would probably make equally unreasonable estimates for `Temperature` < 50 degrees.     
+
+
+b. Are the conditions for regression models satisfied here? What would our residual diagnostics for linear regression models suggest?
+
+```{r fig.height=2.4, fig.width = 3.2, message=FALSE}
+m1 <- lm(Success ~ Temperature, data = shuttle)
+mplot(m1, which = 1)
+mplot(m1, which = 2)
+msummary(m1)
+```
+
+Neither plot looks good!  
+The residual versus fitted plot shows clear over-estimation and underestimation in certain areas. Forget about the idea that there should be no pattern in the residuals.   
+
+The QQ-plot shows deviations from the reference line on both tails.  
+
+The relationship is simply NOT linear and we saw that in our initial scatterplot.  
+
+
+
+
+### NEW Model: Fitting a **Logistic Regression Model**
+
+The proper way of fitting a model to a *binary* response variable is to use a logistic regression model. Logistic regression is considered a **generalized linear model (GLM)**, and therefore we use the `glm()`, rather than `lm()`, function for this. Note that we also have to specify that we are using `family = binomial` in this function.    
+
+```{r}
+m2 <- glm(Success ~ Temperature, data = shuttle, family = binomial(logit))
+msummary(m2)
+
+exp(confint(m2))
+
+```
+
+
+The mathematics behind this is a lot more complicated than with linear regression. We will learn how to interpret the output and test for significance in the next lecture. Remember that logistic regression uses  *maximum likelihood estimation* rather than *least squares* as a method to fit the best model (s curve vs. line) which we will learn more about later. As a consequence, we will NOT have the usual statistics of $R^2$ to compare when we use logistic regression.     
+
+Let's visualize this new model a bit better:
+
+Start by making functions from the 2 models (m1 is SLR and m2 is logistic regression)   
+
+
+```{r}
+myfun1 <- makeFun(m1)  # m1: SLR model
+myfun2 <- makeFun(m2)  # m2: Logistic Regression Model
+```
+
+Now we can show the graph comparing the two models.
+
+```{r warning=FALSE, fig.height=2.8}
+gf_point(Success ~ Temperature, title='SLR model-dashed line vs. Logistic Regression', data = shuttle) %>% 
+  gf_fun(myfun1(Temperature = x) ~ x, lty = 3, xlim = c(45, 85)) %>%
+  gf_fun(myfun2(Temperature=x) ~ x, color = "red", xlim = c(45, 85))
+```
+
+To help us see the observed data at a more in depth level, w create some bins to cut the data into smaller groups by temperature (in this example below six groups are created).   
+
+```{r warning=FALSE, fig.height=2.8}
+shuttle <- mutate(shuttle, TempGroup = cut(Temperature, breaks = 6)) 
+binned.y <- mean(Success ~ TempGroup, data = shuttle)
+binned.x <- mean(Temperature ~ TempGroup, data = shuttle)
+```
+
+After we create bins (smaller groups) we can see how probability of success changes as we go from lower to higher temperature groups.
+
+```{r}
+tally(~Success | TempGroup,data=shuttle)
+
+tally(~Success | TempGroup, format="proportion", data=shuttle)
+```
+You will see that for group 1 with temps between 53 and 57.7 degrees we had 2 flights and both were not a success (0% success).  Compare that to the 3 flights that launched when temps were between 76.3 and 81 degrees where we had 100% success.  These are our observed (empirical) probablities.
+
+
+We can create a graph that shows the observed probabilities for success (see orange dots) and better visualize where the logistic regression is fitting through those points.    
+
+
+```{r warning=FALSE, fig.height=2.8}
+gf_point(binned.y ~ binned.x, size = 5, color = "orange", title="Logistic Regression fit and observed probabilities by 6 groups/bins",
+         xlab = "Temperature", ylab = "Success/ Observed Prob.") %>%
+  gf_lims(y = c(-0.25, 1.25), x = c(45,85)) %>%
+  gf_point(Success ~ Temperature, data = shuttle) %>% 
+  gf_fun(myfun2(Temperature=x) ~ x, color = "red", xlim = c(45, 85))
+```
+
+We could have done this all at once!
+
+```{r warning=FALSE, fig.height=2.8}
+gf_point(binned.y ~ binned.x, size = 5, color = "orange", 
+         xlab = "Temperature", ylab = "Success/ Observed Prob.") %>%
+  gf_lims(y = c(-0.25, 1.25), x = c(45,85)) %>%
+  gf_point(Success ~ Temperature, data = shuttle) %>% 
+  gf_fun(myfun1(Temperature = x) ~ x, lty = 3, xlim = c(45, 85)) %>%
+  gf_fun(myfun2(Temperature=x) ~ x, color = "red", xlim = c(45, 85))
+```
+
+
+How do we check the conditions for logistic regression.  Logistic regression assumes that the logit transformtion is a linear function of the predictors, we can plot the logit function vs. the predictor to see if we have a linear pattern and can proceed.
+
+This is how to generate the **empirical logit plot**.
+There are easier ways and you'll see that later on. For now we can ehck and see that indeed, it is linear enough.
+
+```{r warning=FALSE, fig.height=2.7}
+gf_point(logit(binned.y) ~ binned.x, size = 5, color = "orange", title="Empirical logit plot",
+         xlab = "Temperature", ylab = "Log(Odds)") %>% 
+  gf_lm()
+```
+
+NOTE: If we had a binary predictor, linearity would be automatic (b/c 2 pts determine a line)

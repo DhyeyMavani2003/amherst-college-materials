@@ -1,0 +1,65 @@
+[
+  {
+    "input": [
+      2,
+      4,
+      5
+    ],
+    "key": 2,
+    "name": "3-bit prime modulus"
+  },
+  {
+    "input": [
+      15,
+      4,
+      17
+    ],
+    "key": 2,
+    "name": "5-bit prime modulus"
+  },
+  {
+    "input": [
+      76,
+      65,
+      101
+    ],
+    "key": 5,
+    "name": "7-bit prime modulus"
+  },
+  {
+    "input": [
+      106,
+      140,
+      389
+    ],
+    "key": 107,
+    "name": "9-bit prime modulus"
+  },
+  {
+    "input": [
+      2833,
+      3501,
+      3823
+    ],
+    "key": 556,
+    "name": "12-bit prime modulus"
+  },
+  {
+    "input": [
+      19493,
+      36743,
+      39461
+    ],
+    "key": 983,
+    "name": "16-bit prime modulus"
+  },
+  {
+    "input": [
+      495449,
+      131954,
+      1009501
+    ],
+    "key": 715188,
+    "name": "20-bit prime modulus"
+  }
+]

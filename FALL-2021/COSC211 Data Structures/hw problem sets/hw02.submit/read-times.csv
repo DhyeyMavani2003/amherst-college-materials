@@ -1,0 +1,14 @@
+file name,LinkedSimpleUSet-time (ms),MTFSimpleUSet-time (ms)
+CompleteShakespeare.txt,26660,28515
+DavidCopperfield.txt,4180,7476
+Dubliners.txt,555,890
+EnglishWords.txt,182259,453758
+Frankenstein.txt,549,995
+GreatExpectations.txt,1847,3098
+GreatGatsby.txt,329,546
+Iliad.txt,2890,4707
+Metamorphoses.txt,75,120
+MobyDick.txt,3820,7132
+PortraitOfTheArtist.txt,813,1397
+Uslysses.txt,7406,15366
+WutheringHeights.txt,1071,1981

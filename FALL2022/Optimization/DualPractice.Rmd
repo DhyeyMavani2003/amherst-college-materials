@@ -1,0 +1,60 @@
+
+```{r, include = FALSE}
+library(pracma)
+```
+
+```{r}
+# Chapter 3 dual example (tables, desks, chairs)
+
+# Import lpSolve package
+library(lpSolve)
+
+# Solve original max profit LP
+
+# Set coefficients of the objective function
+f.obj <- c(1,2,1)
+
+# Set matrix corresponding to coefficients of constraints by rows
+# Assumes non-negative solutions
+f.con <- matrix(c(1,4,2,
+                  2,1,1),
+                nrow = 2, byrow = TRUE)
+
+# Set inequality signs
+f.dir <- c(">=",">=")
+
+# Set right hand side coefficients
+f.rhs <- c(0,2)
+
+# Solution to linear program
+result <- lp("min", f.obj, f.con, f.dir, f.rhs)
+print(result)
+soln <- result$solution # x1 x2 x3
+print(soln)
+```
+
+```{r}
+# Solve dual LP
+
+# Set coefficients of the objective function
+f.obj <- c(0,2)
+
+# Set matrix corresponding to coefficients of constraints by rows
+# Assumes non-negative solutions
+f.con <- matrix(c(1,2,
+                  4,1,
+                  2,1),
+                nrow = 3, byrow = TRUE)
+
+# Set inequality signs
+f.dir <- c("<=","<=","<=")
+
+# Set right hand side coefficients
+f.rhs <- c(1,2,1)
+
+# Solution to linear program
+result <- lp("max", f.obj, f.con, f.dir, f.rhs)
+print(result)
+soln <- result$solution # y1 y2
+print(soln)
+```

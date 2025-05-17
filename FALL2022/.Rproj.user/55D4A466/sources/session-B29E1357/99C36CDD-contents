@@ -1,0 +1,261 @@
+
+```{r}
+# CLP example
+
+library(CVXR)
+
+X <- Variable(rows=2, cols=2, PSD = T)
+
+C <- matrix(c(4,1,1,2),nrow=2)
+A1 <- matrix(c(3,2,2,5),nrow=2)
+b <- 1
+
+# objective <- 4*X[1,1]+1*X[1,2]+1*X[2,1]+2*X[2,2]
+objective <- sum(C*X)
+
+# constraint <- 3*X[1,1]+2*X[1,2]+2*X[2,1]+5*X[2,2] == b
+constraint <- sum(A1*X) == b
+
+prob <- Problem(Minimize(objective), list(constraint))
+result <- solve(prob)
+Xmin <- result$getValue(X)
+eigen(Xmin)
+optimal_primal <- result$value # optimal value
+
+# dual problem to the CLP
+
+S <- Variable(rows=2, cols=2, PSD = T) # slack matrix
+y1 <- Variable()
+
+constraint <- y1*A1 + S == C
+
+objective <- b*y1
+
+prob <- Problem(Maximize(objective), list(constraint))
+result <- solve(prob)
+result$getValue(y1)
+optimal_dual <- result$value # optimal value
+
+# SOCP example
+
+X <- Variable(3) # 3 components
+
+C <- c(1,1,4)
+A1 <- c(4,5,3)
+b <- 6
+
+objective <- sum(C*X)
+
+constraint1 <- sum(A1*X) == b
+constraint2 <- X[3] >= cvxr_norm(X[1:2]) # 2nd order cone
+
+prob <- Problem(Minimize(objective), list(constraint1,constraint2))
+result <- solve(prob)
+Xmin <- result$getValue(X)
+optimal_primal <- result$value # optimal value
+
+# dual problem to the SOCP
+
+S <- Variable(3) # slack matrix
+y1 <- Variable()
+
+constraint1 <- y1*A1 + S == C
+constraint2 <- S[3] >= cvxr_norm(S[1:2]) # 2nd order cone
+
+objective <- b*y1
+
+prob <- Problem(Maximize(objective), list(constraint1,constraint2))
+result <- solve(prob)
+result$getValue(y1)
+optimal_dual <- result$value # optimal value
+```
+
+```{r}
+# portfolio covariance matrix SOCP example
+# https://cvxr.rbind.io/cvxr_examples/cvxr_portfolio-optimization/
+
+library(CVXR)
+
+set.seed(10)
+
+## Problem data
+nAssets <- 10
+nSamples <- 100 # number of risk aversion values to consider
+mu <- matrix(abs(rnorm(nAssets)), nrow = nAssets) # expected returns
+Sigma <- matrix(rnorm(nAssets^2), nrow = nAssets, ncol = nAssets)
+Sigma <- t(Sigma) %*% Sigma # covariance matrix
+
+## Form problem
+w <- Variable(nAssets) # how much to invest in each asset
+ret <- t(mu) %*% w # expected return for portfolio
+risk <- quad_form(w, Sigma) # t(w)*Sigma*w
+constraints <- list(w >= 0, sum(w) == 1)
+
+## Risk aversion parameters
+gammas <- 10^seq(-2, 3, length.out = nSamples)
+ret_data <- rep(0, nSamples)
+risk_data <- rep(0, nSamples)
+w_data <- matrix(0, nrow = nSamples, ncol = nAssets)
+
+## Compute trade-off curve
+for(i in 1:nSamples) {
+  gamma <- gammas[i]
+  objective <- ret - gamma * risk
+  prob <- Problem(Maximize(objective), constraints)
+  result <- solve(prob)
+  
+  ## Evaluate risk/return for current solution
+  risk_data[i] <- sqrt(result$getValue(risk))
+  ret_data[i] <- result$getValue(ret)
+  w_data[i,] <- result$getValue(w)
+}
+
+# fraction of return invested in each asset, depending on risk aversion
+library(ggplot2)
+library(tidyr)
+library(RColorBrewer)
+markers_on <- c(10, 20, 30, 40)
+cbPalette <- brewer.pal(n = nAssets, name = "Paired")
+
+w_df <- data.frame(paste0("grp", seq_len(ncol(w_data))),
+                   t(w_data[markers_on,]))
+names(w_df) <- c("grp", sprintf("gamma == %.2f", gammas[markers_on]))
+tidyW <- gather(w_df, key = "gamma", value = "fraction", names(w_df)[-1], factor_key = TRUE)
+p1 <- ggplot() +
+  geom_line(mapping = aes(x = risk_data, y = ret_data), color = "blue")
+nstr <- sprintf("gamma == %.2f", gammas[markers_on])
+df <- data.frame(markers =  markers_on, x = risk_data[markers_on],
+                 y = ret_data[markers_on], labels = nstr)
+p1 + geom_point(data = df, mapping = aes(x = x, y = y), color = "black") +
+  annotate("text", x = df$x + 0.2, y = df$y - 0.05, label = df$labels, parse = TRUE) +
+  labs(x = "Risk (Standard Deviation)", y = "Expected Return")
+
+ggplot(data = tidyW, mapping = aes(x = gamma, y = fraction)) +
+  geom_bar(mapping = aes(fill = grp), stat = "identity") +
+  scale_x_discrete(labels = parse(text = levels(tidyW$gamma))) +
+  scale_fill_manual(values = cbPalette) +
+  guides(fill = "none") +
+  labs(x = "Risk Aversion", y = "Fraction of Budget")
+
+# worst case risk when covariance is not fully known
+nAssets <- 3
+w <- c(0.1, 0.5, 0.4)
+Sigma <- Variable(rows=nAssets, cols=nAssets, PSD = T)
+constraint1 <- Sigma[1,1] == 0.1
+constraint2 <- Sigma[2,2] == 0.03
+constraint3 <- Sigma[3,3] == 0.6
+constraint4 <- Sigma[1,2] >= 0
+constraint5 <- Sigma[1,3] <= 0
+
+objective <- Maximize(t(w) %*% Sigma %*% w)
+problem <- Problem(objective, 
+                   list(constraint1,constraint2,constraint3,
+                        constraint4,constraint5))
+result <- solve(problem)
+risk.worst.case <- result$value
+
+objective <- Minimize(t(w) %*% Sigma %*% w)
+problem <- Problem(objective, 
+                   list(constraint1,constraint2,constraint3,
+                        constraint4,constraint5))
+result <- solve(problem)
+risk.best.case <- result$value
+
+# risk is somewhere between best case of 0.037 and worst case of 0.158
+```
+
+```{r mod specific to problem 5}
+# portfolio covariance matrix SOCP example
+# https://cvxr.rbind.io/cvxr_examples/cvxr_portfolio-optimization/
+
+library(CVXR)
+
+set.seed(10)
+
+## Problem data
+nAssets <- 3
+nSamples <- 100 # number of risk aversion values to consider
+mu <- matrix(abs(rnorm(nAssets)), nrow = nAssets) # expected returns
+Sigma <- matrix(rnorm(nAssets^2), nrow = nAssets, ncol = nAssets)
+Sigma <- t(Sigma) %*% Sigma # covariance matrix
+
+## Form problem
+w <- Variable(nAssets) # how much to invest in each asset
+ret <- t(mu) %*% w # expected return for portfolio
+risk <- quad_form(w, Sigma) # t(w)*Sigma*w
+constraints <- list(w >= 0, sum(w) == 1)
+
+## Risk aversion parameters
+gammas <- 10^seq(-2, 3, length.out = nSamples)
+ret_data <- rep(0, nSamples)
+risk_data <- rep(0, nSamples)
+w_data <- matrix(0, nrow = nSamples, ncol = nAssets)
+
+## Compute trade-off curve
+for(i in 1:nSamples) {
+  gamma <- gammas[i]
+  objective <- ret - gamma * risk
+  prob <- Problem(Maximize(objective), constraints)
+  result <- solve(prob)
+  
+  ## Evaluate risk/return for current solution
+  risk_data[i] <- sqrt(result$getValue(risk))
+  ret_data[i] <- result$getValue(ret)
+  w_data[i,] <- result$getValue(w)
+}
+
+# fraction of return invested in each asset, depending on risk aversion
+library(ggplot2)
+library(tidyr)
+library(RColorBrewer)
+markers_on <- c(20, 40, 40)
+cbPalette <- brewer.pal(n = nAssets, name = "Paired")
+
+w_df <- data.frame(paste0("grp", seq_len(ncol(w_data))),
+                   t(w_data[markers_on,]))
+names(w_df) <- c("grp", sprintf("gamma == %.2f", gammas[markers_on]))
+tidyW <- gather(w_df, key = "gamma", value = "fraction", names(w_df)[-1], factor_key = TRUE)
+p1 <- ggplot() +
+  geom_line(mapping = aes(x = risk_data, y = ret_data), color = "blue")
+nstr <- sprintf("gamma == %.2f", gammas[markers_on])
+df <- data.frame(markers =  markers_on, x = risk_data[markers_on],
+                 y = ret_data[markers_on], labels = nstr)
+p1 + geom_point(data = df, mapping = aes(x = x, y = y), color = "black") +
+  annotate("text", x = df$x + 0.2, y = df$y - 0.05, label = df$labels, parse = TRUE) +
+  labs(x = "Risk (Standard Deviation)", y = "Expected Return")
+
+ggplot(data = tidyW, mapping = aes(x = gamma, y = fraction)) +
+  geom_bar(mapping = aes(fill = grp), stat = "identity") +
+  scale_x_discrete(labels = parse(text = levels(tidyW$gamma))) +
+  scale_fill_manual(values = cbPalette) +
+  guides(fill = "none") +
+  labs(x = "Risk Aversion", y = "Fraction of Budget")
+```
+
+```{r}
+# worst case risk when covariance is not fully known
+nAssets <- 3
+w <- c(0.2, 0.4, 0.4)
+Sigma <- Variable(rows=nAssets, cols=nAssets, PSD = T)
+constraint1 <- Sigma[1,1] == 0.05
+constraint2 <- Sigma[2,2] == 0.1
+constraint3 <- Sigma[3,3] == 0.03
+constraint4 <- Sigma[1,2] >= 0
+constraint5 <- Sigma[2,3] >= 0
+
+objective <- Maximize(t(w) %*% Sigma %*% w)
+problem <- Problem(objective, 
+                   list(constraint1,constraint2,constraint3,
+                        constraint4,constraint5))
+result <- solve(problem)
+risk.worst.case <- result$value
+
+objective <- Minimize(t(w) %*% Sigma %*% w)
+problem <- Problem(objective, 
+                   list(constraint1,constraint2,constraint3,
+                        constraint4,constraint5))
+result <- solve(problem)
+risk.best.case <- result$value
+print(risk.worst.case)
+print(risk.best.case)
+```

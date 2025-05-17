@@ -1,0 +1,157 @@
+---
+author: "Dhyey Mavani"
+title: "Math 365 Exam 2"
+output: pdf_document
+header-includes:
+  - \usepackage{float, graphicx}
+---
+
+Please answer each problem as clearly and completely as you can.  Do not discuss these problems with other students, or anyone else but me. You may use your textbook, lecture notes, class materials (including those posted on the Math 365 website), and homework, but do not use other books, the internet, or any materials other than those directly associated with the course.  Please do feel free to ask me questions, either via email or meeting with me. Show all work to demonstrate that you understand your answer. You may use R for any computations.
+
+Exam is due **Thursday April 28**, submitted to Gradescope by midnight. Late submissions will be penalized by 10 points per day unless you obtain an extension.
+
+## Problem 1 (25pt) 
+
+Consider the offspring distribution for a branching process given by $a_k=(\frac{1}{2})^{k+1}$ for $k\ge0$.
+
+(a) Classify this branching process as subcritical, critical, or supercritical. Hint: take a derivative of each side of the formula for geometric series to get a formula to evaluate the series for the expected number of offspring (we used this formula in the queueing lab).
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{1a.jpeg}
+  \end{center}
+  \caption{Problem 1 part (a)}
+  \label{Problem 1 part (a)}
+\end{figure}
+
+
+(b) Find the extinction probability.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{1b.jpeg}
+  \end{center}
+  \caption{Problem 1 part (b)}
+  \label{Problem 1 part (b)}
+\end{figure}
+
+(c) Prove by induction that $G_n(s)=\frac{n-s(n-1)}{n+1-ns}$ for $n\ge1$.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{1c.jpeg}
+  \end{center}
+  \caption{Problem 1 part (c)}
+  \label{Problem 1 part (c)}
+\end{figure}
+
+(d) Let $T$ be the first generation at which the population is zero. Using part (c), find the probability of going extinct at the $n$th generation: $\mathbb{P}(T=n)$. Simplify, and then use to determine $\mathbb{P}(T=1)$, $\mathbb{P}(T=2)$, and $\mathbb{P}(T=3)$.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{1d.jpeg}
+  \end{center}
+  \caption{Problem 1 part (d)}
+  \label{Problem 1 part (d)}
+\end{figure}
+
+
+## Problem 2 (15pt)  
+
+Suppose two stores open at 10am on a particular day. Customers enter store A according to a Poisson process with rate 4 arrivals per hour and customers enter store B according to a Poisson process with rate 8 arrivals per hour. Assume that customers arrive at the two stores independently.
+
+(a) At what time on average will the first customer enter store A?
+
+(b) At what time on average will the first customer of the day enter either store?
+
+(c) State the probability that the first customer to show up enters store A rather than store B.
+
+(d) How long on average after opening before the two stores together have five total customers?
+
+(e) Find the probability that exactly 6 customers enter store A and 14 customers enter store B between 10am and noon.
+
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{2.jpeg}
+  \end{center}
+  \caption{Problem 2}
+  \label{Problem 2}
+\end{figure}
+
+## Problem 3 (20pt) 
+
+If $(N_t)_{t\ge0}$ is a Poisson process with parameter $\lambda$, find the probability generating function $G(s)=\mathbb{E}[s^{N_t}]$. Simplify to a function that is not a series. Note that $G(s)$ will involve both $\lambda$ and $t$ as parameters.
+
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{3.jpeg}
+  \end{center}
+  \caption{Problem 3}
+  \label{Problem 3}
+\end{figure}
+
+## Problem 4 (20pt)  
+
+Suppose that $N_t$ is a Poisson process with arrival rate parameter $\lambda=1$. Determine the conditional expectations $\mathbb{E}(N_2 | N_1)$ (how many total arrivals during [0,2] we expect if we know how many arrived during [0,1]) and $\mathbb{E}(N_1 | N_2)$ (how many arrivals we expect occurred during [0,1] if we know how many total arrived during [0,2]).
+
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{4.jpeg}
+  \end{center}
+  \caption{Problem 4}
+  \label{Problem 4}
+\end{figure}
+
+## Problem 5 (20pt)
+
+Suppose that a continuous-time Markov chain with state space $S=\{1,2,3,4\}$ has generator matrix
+```{r}
+Q<-matrix(0,4,4)
+Q[1,1:3]<-c(-3,2,1)
+Q[2,1:3]<-c(1,-2,1)
+Q[3,1:4]<-c(1,1,-3,1)
+Q[4,2:4]<-c(1,0,-1)
+Q
+```
+(a) Find the equilibrium distribution $\pi$.
+```{r}
+# eigenvalues and eigenvectors
+r <- eigen(t(Q))
+lambda <- r$values
+V <- r$vectors
+pibar <- V[,4]/sum(V[,4]) # eigenvector with lambda=0
+pibar
+```
+(b) If $X_0=2$, what is the expected amount of time until it changes state for the first time?
+```{r}
+-1/Q[2,2]
+```
+(c) If $X_0=1$, what is the expected amount of time until the chain first hits state 3?
+```{r}
+# Making 3 the absorbing state (while starting from 1)
+# mean passage time to state 3 (treat as absorbing state)
+V <- Q[c(1,2,4),c(1,2,4)]
+V
+Fm <- solve(-V) # Fundamental matrix
+Fm
+rowSums(Fm) # gives a1 a2 a4
+
+# In this case our answer would actually be the a1 value, the last entry of final row sums matrix
+print("Meantime is 1 in the case where we start from state 1")
+```
+(d) If $X_0=4$, what is the expected amount of time until the chain first hits state 3?
+```{r}
+# Making 3 the absorbing state (while staring from 1)
+# mean passage time to state 3 (treat as absorbing state)
+V <- Q[c(1,2,4),c(1,2,4)]
+V
+Fm <- solve(-V) # Fundamental matrix
+Fm
+rowSums(Fm) # gives a1 a2 a4
+
+# In this case our answer would actually be the a4 value, the last entry of final row sums matrix
+print("Meantime is 2 in the case where we start from state 4")
+```

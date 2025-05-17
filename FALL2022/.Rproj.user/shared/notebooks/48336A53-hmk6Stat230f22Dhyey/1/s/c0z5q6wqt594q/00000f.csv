@@ -1,0 +1,4 @@
+"0","data(Meniscus)"
+"0","#Method is recorded numerically, we need it to be a factor"
+"0","# FYI - The 3 methods are vertical suture, meniscus arrow, FastT-Fix"
+"0","Meniscus <- mutate(Meniscus, Method = factor(Method)) #overwrites the variable"

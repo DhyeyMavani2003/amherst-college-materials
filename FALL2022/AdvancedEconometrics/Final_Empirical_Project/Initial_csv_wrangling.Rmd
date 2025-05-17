@@ -1,0 +1,191 @@
+# Urb Popl vs value added by serv industry vs govt exp on edu
+
+```{r}
+data <- read.csv(file = 'imported_data.csv')
+colnames(data) <- c("year", "year_code", "country_name", "country_code", 
+                    "pct_GDP_val_add_by_serv", "pct_urban_popl",
+                    "pct_GDP_govt_exp_on_edu")
+data <- subset(data, select = -c(year_code,country_name))
+data$year <- as.numeric(data$year)
+data$pct_GDP_govt_exp_on_edu <- as.numeric(data$pct_GDP_govt_exp_on_edu)
+data$pct_GDP_val_add_by_serv <- as.numeric(data$pct_GDP_val_add_by_serv)
+data$country_code[data$country_code == c("AUS","AUT","BEL","CAN","CHL","CZE",
+                                         "DNK","EST","FIN","FRA","DEU","GRC",
+                                         "HUN","ISL","IRL","ISR","ITA","JPN",
+                                         "KOR","LVA","LTU","LUX","MEX","NLD",
+                                         "NZL","NOR","POL","PRT","SVK","SVN",
+                                         "ESP","SWE","CHE","TUR","GBR","USA")] <- 
+  c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
+     19,20,21,22,23,24,25,26,27,28,29,30,31,31,33,34,35,36)
+data$country_code <- as.numeric(data$country_code)
+write.csv(data, file = "dhyey_cleaned_data_for_STATA.csv")
+```
+
+```{r}
+cleaned_data <- read.csv(file = "dhyey_cleaned_data_for_STATA.csv")
+dropped_na_data <- tidyr::drop_na(cleaned_data)
+dropped_na_data
+# install.packages("ivreg")
+library("ivreg")
+iv1 <- ivreg(pct_urban_popl ~ pct_GDP_val_add_by_serv | pct_GDP_govt_exp_on_edu, data = dropped_na_data)
+summary(iv1)
+```
+
+```{r}
+naive_ols <- lm(pct_urban_popl ~ pct_GDP_val_add_by_serv, data = dropped_na_data)
+summary(naive_ols)
+```
+
+```{r}
+stage1 <- lm(pct_GDP_val_add_by_serv ~ pct_GDP_govt_exp_on_edu, data = dropped_na_data)
+summary(stage1)
+
+dropped_na_data[["pred_pct_GDP_val_add_by_serv"]] <- predict(stage1, dropped_na_data)
+stage2 <- lm(pct_urban_popl ~ pred_pct_GDP_val_add_by_serv, data = dropped_na_data)
+summary(stage2)
+```
+
+# GDP per Capit vs Urb, and Urb vs popl growth, arable land
+
+```{r}
+data <- read.csv(file = 'data_gdp_vs_urb.csv')
+colnames(data) <- c("year", "year_code", "country_name", "country_code", 
+                    "gdp_per_capita", "pct_urban_popl",
+                    "pct_pop_growth", "pct_arable_land")
+data <- subset(data, select = -c(year_code,country_name))
+data$year <- as.numeric(data$year)
+data$gdp_per_capita <- as.numeric(data$gdp_per_capita)
+data$pct_urban_popl <- as.numeric(data$pct_urban_popl)
+data$pct_pop_growth <- as.numeric(data$pct_pop_growth)
+data$pct_arable_land <- as.numeric(data$pct_arable_land)
+data$country_code[data$country_code == c("AUS","AUT","BEL","CAN","CHL","CZE",
+                                         "DNK","EST","FIN","FRA","DEU","GRC",
+                                         "HUN","ISL","IRL","ISR","ITA","JPN",
+                                         "KOR","LVA","LTU","LUX","MEX","NLD",
+                                         "NZL","NOR","POL","PRT","SVK","SVN",
+                                         "ESP","SWE","CHE","TUR","GBR","USA")] <- 
+  c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
+     19,20,21,22,23,24,25,26,27,28,29,30,31,31,33,34,35,36)
+data$country_code <- as.numeric(data$country_code)
+write.csv(data, file = "dhyey_cleaned_data_for_STATA_gdp_vs_urb.csv")
+```
+
+```{r}
+cleaned_data <- read.csv(file = "dhyey_cleaned_data_for_STATA_gdp_vs_urb.csv")
+dropped_na_data <- tidyr::drop_na(cleaned_data)
+dropped_na_data
+# install.packages("ivreg")
+library("ivreg")
+iv1 <- ivreg(gdp_per_capita ~ pct_urban_popl | pct_pop_growth, data = dropped_na_data)
+summary(iv1)
+```
+
+```{r}
+naive_ols <- lm(gdp_per_capita ~ pct_urban_popl, data = dropped_na_data)
+summary(naive_ols)
+```
+
+```{r pursue this one}
+stage1 <- lm(pct_urban_popl ~ pct_pop_growth, data = dropped_na_data)
+summary(stage1)
+dropped_na_data[["pred_pct_urban_popl"]] <- predict(stage1, dropped_na_data)
+stage2 <- lm(gdp_per_capita ~ pred_pct_urban_popl, data = dropped_na_data)
+summary(stage2)
+```
+
+# % Urb Popl on % popl growth rate and % arable land, while % agri value add as instrument for arable land %
+
+```{r}
+data <- read.csv(file = 'final_data.csv')
+colnames(data) <- c("year", "year_code", "country_name", "country_code", 
+                    "pct_urban_popl", "pct_pop_growth",
+                    "pct_agri_land", "pct_agri_val_add")
+data <- subset(data, select = -c(year_code,country_name))
+data$year <- as.numeric(data$year)
+data$pct_urban_popl <- as.numeric(data$pct_urban_popl)
+data$pct_pop_growth <- as.numeric(data$pct_pop_growth)
+data$pct_agri_land <- as.numeric(data$pct_agri_land)
+data$pct_agri_val_add <- as.numeric(data$pct_agri_val_add)
+data$country_code[data$country_code == c("AUS","AUT","BEL","CAN","CHL","CZE",
+                                         "DNK","EST","FIN","FRA","DEU","GRC",
+                                         "HUN","ISL","IRL","ISR","ITA","JPN",
+                                         "KOR","LVA","LTU","LUX","MEX","NLD",
+                                         "NZL","NOR","POL","PRT","SVK","SVN",
+                                         "ESP","SWE","CHE","TUR","GBR","USA")] <- 
+  c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
+     19,20,21,22,23,24,25,26,27,28,29,30,31,31,33,34,35,36)
+data$country_code <- as.numeric(data$country_code)
+
+write.csv(data, file = "dhyey_cleaned_data_for_STATA_urb_vs_popl_vs_agri.csv")
+```
+
+```{r}
+cleaned_data <- read.csv(file = "dhyey_cleaned_data_for_STATA_urb_vs_popl_vs_agri.csv")
+dropped_na_data <- tidyr::drop_na(cleaned_data)
+dropped_na_data
+# install.packages("ivreg")
+library("ivreg")
+iv1 <- ivreg(pct_urban_popl ~ pct_agri_land | pct_agri_val_add, data = dropped_na_data)
+summary(iv1)
+```
+
+```{r}
+naive_ols <- lm(pct_urban_popl ~ pct_pop_growth + pct_agri_land, data = dropped_na_data)
+summary(naive_ols)
+```
+
+```{r}
+stage1 <- lm(pct_agri_land ~ pct_agri_val_add, data = dropped_na_data)
+summary(stage1)
+dropped_na_data[["pred_pct_agri_land"]] <- predict(stage1, dropped_na_data)
+stage2 <- lm(pct_urban_popl ~ pct_pop_growth + pred_pct_agri_land, data = dropped_na_data)
+summary(stage2)
+```
+
+```{r}
+stage1 <- lm(pct_urban_popl ~ pct_pop_growth +pct_agri_val_add, data = dropped_na_data)
+summary(stage1)
+dropped_na_data[["pred_pct_urban_popl"]] <- predict(stage1, dropped_na_data)
+stage2 <- lm(gdp_per_capita ~ pred_pct_urban_popl, data = dropped_na_data)
+summary(stage2)
+```
+
+# with value added by agri
+```{r}
+data <- read.csv(file = 'dhyeydata.csv')
+colnames(data) <- c("year", "year_code", "country_name", "country_code","GDP_per_capita", 
+                    "pct_urban_popl", "pct_pop_growth",
+                    "pct_agri_val_add")
+data <- subset(data, select = -c(year_code,country_name))
+data$year <- as.numeric(data$year)
+data$GDP_per_capita <- as.numeric(data$GDP_per_capita)
+data$pct_urban_popl <- as.numeric(data$pct_urban_popl)
+data$pct_pop_growth <- as.numeric(data$pct_pop_growth)
+data$pct_agri_val_add <- as.numeric(data$pct_agri_val_add)
+data$country_code[data$country_code == c("AUS","AUT","BEL","CAN","CHL","CZE",
+                                         "DNK","EST","FIN","FRA","DEU","GRC",
+                                         "HUN","ISL","IRL","ISR","ITA","JPN",
+                                         "KOR","LVA","LTU","LUX","MEX","NLD",
+                                         "NZL","NOR","POL","PRT","SVK","SVN",
+                                         "ESP","SWE","CHE","TUR","GBR","USA")] <- 
+  c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
+     19,20,21,22,23,24,25,26,27,28,29,30,31,31,33,34,35,36)
+data$country_code <- as.numeric(data$country_code)
+
+write.csv(data, file = "dhyey_cleaned_data_for_STATA_lastdata.csv")
+```
+
+
+```{r}
+cleaned_data <- read.csv(file = "dhyey_cleaned_data_for_STATA_lastdata.csv")
+dropped_na_data <- tidyr::drop_na(cleaned_data)
+dropped_na_data
+```
+
+```{r}
+stage1 <- lm(pct_urban_popl ~ pct_pop_growth + pct_agri_val_add, data = dropped_na_data)
+summary(stage1)
+dropped_na_data[["pred_pct_urban_popl"]] <- predict(stage1, dropped_na_data)
+stage2 <- lm(GDP_per_capita ~ pred_pct_urban_popl, data = dropped_na_data)
+summary(stage2)
+```

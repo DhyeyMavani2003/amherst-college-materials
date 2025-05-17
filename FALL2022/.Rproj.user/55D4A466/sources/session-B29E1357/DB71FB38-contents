@@ -1,0 +1,147 @@
+---
+title: "Homework 7  - Stats 230 - 2way ANOVA : activity and alfalfa"
+author: "Dhyey Mavani"
+date: "date"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+
+
+```{r, include = FALSE}
+library(mosaic)
+library(Stat2Data)
+library(DescTools)
+options(digits = 6)
+```
+
+### PROBLEMS TO TURN IN: #6.4abc,  #6.36bcde, #6.37, #6.38
+
+The first four problems are conceptual. 
+
+#### Exercise 6.4 abc
+
+> 6.4 part a:
+
+SOLUTION: Here we can say that the response was the second-graders' score on the set of math problems
+
+> 6.4 part b:
+
+SOLUTION: The two factors here are noise and ADHD
+
+> 6.4 part c:
+
+SOLUTION: Here, whether or not the second-grader had ADHD is observational, while Noise is experimental. Also, we can see that both factors have 2 levels.
+
+#### Exercise 6.36 bcde
+
+```{r}
+data(Alfalfa)
+```
+
+> 6.36 part b: Two-way main effects ANOVA table
+
+SOLUTION:
+
+```{r}
+aovmodel <- aov(Ht4 ~ Acid + Row, data = Alfalfa)
+summary(aovmodel)
+```
+
+
+> 6.36 part c: Conditions for ANOVA
+
+SOLUTION: 
+
+We have equal variance of errors because we can see the mostly equal spread of points around the x-axis in the residuals vs fitted plot. 
+
+Normality of errors is also satisfied because we can see the qq plot with most of the points falling along the line. 
+
+We can see that there is a slight heteroskedasticity with the increase in the fitted values, but in my opinion it is not too worrisome. 
+
+Finally, by the construction of the experiment, the samples are independent, and we can say that the treatment groups all have the same sample size so there is nothing to worry about there. 
+
+Hence, all conditions for using the ANOVA model are satisfied.
+
+```{r}
+model1 <- lm(Ht4 ~ Acid + Row, data = Alfalfa)
+mplot(model1, which = 1:2)
+```
+
+> 6.36 part d:
+
+SOLUTION: We can say that there is a significant difference in average growth due to the acid treatments, because the p-value of the ANOVA F-test is 0.049 < 0.05. 
+
+This tells me that there is a difference between at least 2 of the 3 treatment types.
+
+> 6.36 part e:
+
+SOLUTION: We can say that there is no significant difference in average growth due to the distance from the window. 
+
+We can conclude this because the p-value of the ANOVA F-test is 0.324, which is significantly greater than the significance level of 0.05.
+
+#### Exercise 6.37 - continues 6.36
+
+SOLUTION:
+
+Fisher’s LSD at6 the 0.05 significance level shows that there is significant difference in mean alfalfa growth after four days between the water and 3.0 HCl treatment levels. We can say this because the 95% confidence interval for that particular comparison does not include 0 inside the range.
+
+Also, I wanted to note that, we observed previously that the factor of Acid is significant
+
+```{r}
+PostHocTest(aovmodel, method = "lsd")
+```
+
+
+#### Exercise 6.38
+
+```{r}
+data(Popcorn)
+glimpse(Popcorn)
+head(Popcorn)
+#Strongly recommend you LOOK at the data and make sure R is treating variables the way you expect. #This is also a hint that you need to do something here. You can force variables to be treated #numerically with as.numeric, and you can force variables to be treated categorically with #as.factor (or mutate them to factors with factor() like you saw in Hmk 6). 
+Popcorn <- mutate(Popcorn, Trial = factor(Trial))
+```
+
+> 6.38 part a:
+
+SOLUTION: The mean number of unpopped kernels for the entire sample is 25.6 kernels. The effect for Orville is -7.75 kernels, and the effect for Seville is 7.75.
+
+```{r}
+summary(Popcorn)
+aovmod2 <- aov(Unpopped ~ Brand + Trial, data = Popcorn)
+model.tables(aovmod2)
+```
+
+> 6.38 part b: Two-way ANOVA model and conditions
+
+SOLUTION:
+There are rather few data points, and the qq plot shows weak fitting to the line. But it is worthy to note that the points mostly fall in place, so we have normality of errors. 
+
+The residuals vs fitted plot demonstrates slight heteroskedasticity as we can see in the plot, but the mostly even spread of points around the x-axis tells us that equal variance of errors is met. 
+
+Finally, we know that the samples are independently taken, and each brand has the same number of trials, so all conditions are satisfied and we are good!
+
+```{r}
+summary(aovmod2)
+mod2 <- lm(Unpopped ~ Brand + Trial, data = Popcorn)
+mplot(mod2, which = 1:2)
+```
+
+> 6.38 part c:
+
+SOLUTION: The brand of popcorn does appear to make a significant difference in the mean number of unpopped kernels.
+
+We can say this because the p-value of the ANOVA F-test is 0.023 < 0.05. 
+
+The trial does not make a significant difference in the mean number of unpopped kernels though as we can see that the p-value of 0.101 is greater than 0.05!
+
+

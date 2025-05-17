@@ -1,0 +1,64 @@
+ICEsoundAPO_x64_1.32 (18/7-30):
+Model list based on 'ICEsound-ASUS project list_20180726.xlsx'.
+
+ICEsoundAPO_x64_1.32 (18/7-23):
+Model list based on 'ICEsound-ASUS project list_20180719.xlsx'.
+
+ICEsoundAPO_x64_1.32 (18/7-18):
+Model list based on 'ICEsound-ASUS project list_20180713.xlsx'.
+
+ICEsoundAPO_x64_1.32 (9/7-18):
+Model list based on 'ICEsound-ASUS project list_20180705.xlsx'.
+
+ICEsoundAPO_x64_1.32 (2/7-18):
+Model list based on 'ICEsound-ASUS project list_20180702.xlsx'.
+Package now certified for RS4.
+
+ICEsoundAPO_x64_1.32 (22/6-18):
+Model list based on 'ICEsound-ASUS project list_20180621.xlsx'.
+
+ICEsoundAPO_x64_1.32 (15/6-18):
+Model list based on 'ICEsound-ASUS project list_20180615.xlsx'.
+
+ICEsoundAPO_x64_1.32 (11/6-18):
+Added tuning for X705.
+
+ICEsoundAPO_x64_1.32 (1/6-18):
+Model list based on 'ICEsound-ASUS project list_20180531.xlsx'.
+Removed blank tuning for unsupported models since it was mistakenly installed on supported models when the audio codec had not yet been installed.
+
+ICEsoundAPO_x64_1.32 (28/5-18):
+Model list based on 'ICEsound-ASUS project list_20180524.xlsx'.
+Added VC65 models to supported model list.
+
+ICEsoundAPO_x64_1.32 (18/5-18):
+Model list based on 'ICEsound-ASUS project list_20180517.xlsx'.
+
+ICEsoundAPO_x64_1.32 (11/5-18):
+Model list based on 'ICEsound-ASUS project list_20180510.xlsx'.
+
+ICEsoundAPO_x64_1.32 (7/5-18):
+Added tunings for X407UAR_UBR_UF.
+Model list based on 'ICEsound-ASUS project list_20180503.xlsx'.
+
+ICEsoundAPO_x64_1.32 (26/4-18):
+Model list based on 'ICEsound-ASUS project list_20180423.xlsx'.
+
+ICEsoundAPO_x64_1.32 (20/4-18):
+Model list based on 'ICEsound-ASUS project list_20180419.xlsx'.
+
+ICEsoundAPO_x64_1.32 (13/4-18):
+Added tuning for X430UN_UF_UA.
+Updated tuning for TP401CAE.
+Model list based on 'ICEsound-ASUS project list_20180413.xlsx'.
+
+ICEsoundAPO_x64_1.32 (09/4-18):
+Added tunings for TP203MAH, TP401CAE.
+Updated tunings for TP412UA, UX391UA, UX430UA_UR_UQ, X560UD and X530UNV_UF_UN_UA.
+Model list based on 'ICEsound-ASUS project list_20180330.xlsx'.
+
+ICEsoundAPO_x64_1.32 (26/3-18):
+Added tunings for UX391UA and UX430UA_UR_UQ.
+
+ICEsoundAPO_x64_1.32 (15/3-18):
+Model list based on 'ICEsound-ASUS project list_20180312.xlsx'.

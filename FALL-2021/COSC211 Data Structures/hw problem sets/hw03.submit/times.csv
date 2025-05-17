@@ -1,0 +1,14 @@
+file name,ArraySimpleSSet-time (ms),BinarySearchTree-time (ms),Word Count
+CompleteShakespeare.txt,781,206,31541
+DavidCopperfield.txt,224,56,17110
+Dubliners.txt,48,12,7891
+EnglishWords.txt,53,958967,234371
+Frankenstein.txt,42,14,7480
+GreatExpectations.txt,107,29,12475
+GreatGatsby.txt,30,8,6642
+Iliad.txt,138,40,14347
+Metamorphoses.txt,8,3,3114
+MobyDick.txt,228,42,19884
+PortraitOfTheArtist.txt,59,15,9560
+Uslysses.txt,489,55,29918
+WutheringHeights.txt,74,21,10426

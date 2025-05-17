@@ -1,0 +1,255 @@
+---
+title: "LAB 4 - Stat 230 - MLR I (Intro) - 3.1-3.3"
+author: "P.B. Matheson adapted from A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+### Introduction to Multiple Linear Regression
+
+```{r, include = FALSE}
+library(mosaic)
+library(mosaicData)
+library(GGally)
+options(digits=6)
+```
+
+In order to practice fitting multiple linear regression models, we need to introduce a new data set that we can use for illustration of methods. Here, we are going to take a look at the RailTrail data set that is built into mosaic.
+
+```{r}
+data(RailTrail) 
+RailTrail <- mutate(RailTrail, dayType = factor(dayType))
+glimpse(RailTrail)
+```
+
+Remember that you can get help on a data set by using the help command:
+
+```{r}
+help(RailTrail) #remove the # sign in front to access the help, put it back to compile
+#look at the types of variables in the data
+```
+
+This data is LOCAL REAL data collected in 2005 in order to assess traffic on the Northampton Rail Trail. We are interested in predicting the *volume* based on the other variables, and we'll start building up some possible models in this lab. To begin, let's use just a SLR with average temperature to predict volume. It is always a good idea to look at the distributions of the relevant variables first (you can check out the scatterplot matrix), but will we look ahead to modeling since that is what we are aiming to practice.
+
+```{r}
+ggpairs(RailTrail, columns = c(1:3, 7:9, 11))
+
+gf_point(volume ~ avgtemp, xlab="Average Temperature (F)", ylab= "Number of Crossings", data = RailTrail) %>%
+  gf_lm() %>%
+  gf_smooth()
+```
+
+Describe the form of the bivariate relationship between average temperature and volume.
+
+> ANSWER: (is the relationship linear? how strong is the association?) weakly linear
+
+Now let's fit the SLR model.
+
+```{r}
+mod1 <- lm(volume ~ avgtemp, data = RailTrail)
+msummary(mod1)
+predvol1 <- makeFun(mod1)
+```
+
+In the context of the problem, report and interpret the intercept from this model. 
+
+> ANSWER: 
+
+Report and interpret the slope ($\hat{\beta}_1$) from this model.
+
+> ANSWER:
+  
+What is the predicted number of crossings on a day with average temperature equal to 40 degrees?
+
+> ANSWER:  (Yes you can use the code to get this) 291.6
+
+
+
+What is the predicted number of crossings on a day with average temperature equal to 60 degrees?
+
+> ANSWER: (Yes you can use the code to get this) 387.6
+
+Surely we can add other variables besides average temperature to our model. Two variables are of particular interest: cloudcover and dayType. 
+
+What do you expect the relationship between cloudcover and volume to be? Think about the problem, no need to generate any plots.
+
+> ANSWER:
+
+What do you expect the relationship between dayType and volume to be? Think about the problem, no need to generate any plots.
+
+> ANSWER:
+
+
+Now, we fit a new model with average temperature and dayType used to predict volume. 
+
+```{r}
+mod2 <- lm(volume ~ avgtemp + dayType, data = RailTrail)
+summary(mod2)
+predvol2 <- makeFun(mod2)
+predvol2(avgtemp = 60, dayType = "weekday")
+```
+
+Looking at the model fit, is it a parallel slopes model or not?
+
+> ANSWER: 
+
+In the context of the problem, report and interpret the intercept ($\hat{\beta}_0$).
+
+> ANSWER: 
+
+Report and interpret the third regression parameter from this model ($\hat{\beta}_2$).
+
+> ANSWER: 
+
+What is the predicted number of crossings on a weekday with average temperature equal to 60 degrees? How about on a weekend/holiday?
+
+> ANSWER: 365.1 weekday and 435.42 weekend.
+
+If we decide to add an interaction term to the model, will we be using a parallel slopes model or not?
+
+> ANSWER: no it will be interacting slopes model
+
+Let's try it! We can also visualize this new model. 
+
+```{r}
+mod3 <- lm(volume ~ avgtemp + dayType + avgtemp:dayType, data = RailTrail) #avgtemp*dayType is equivalent
+msummary(mod3)
+predvol3 <- makeFun(mod3)
+predvol3(avgtemp = 40, dayType = "weekend")
+gf_point(volume ~ avgtemp, xlab = "Average Temperature (F)", ylab = "Number of Crossings", data = RailTrail, color = ~ dayType) %>% gf_lm() 
+```
+
+Report and interpret the second regression parameter from this model ($\hat{\beta}_1$).
+
+> ANSWER:
+
+Report and interpret the fourth regression parameter from this model ($\hat{\beta}_3$).
+
+> ANSWER:
+
+What is the predicted number of crossings on a weekday with average temperature equal to 40 degrees?  How about on a  weekend/holiday?
+
+> ANSWER: 253.985 in weekday and 384.164 in weekend
+
+
+### Model Comparison
+
+Which of these three models do you currently prefer for predicting volume? Discuss with those around you. Explain your choice. 
+
+> ANSWER: 
+
+
+ASK IF YOU HAVE ANY QUESTIONS ON THE PARTS ABOVE. THE PARTS BELOW SHOULD BE ATTEMPTED ONCE YOU ARE COMFORTABLE WITH THE ABOVE MATERIAL, and may extend beyond class time (and you can check your answers via the solution). 
+
+### Adding Cloudcover
+
+We can add cloudcover to the model in two different ways. It's a quantitative variable, so we can just add it as a predictor, or we could consider creating groups BASED on it. In this section, you'll be taking a look at models where cloudcover is treated quantitatively versus as a categorical variable with three levels. 
+
+First, let's examine the relationship between cloudcover and volume. 
+
+```{r}
+gf_point(volume ~ cloudcover, data = RailTrail) %>% gf_lm()
+```
+
+How would you characterize this relationship?
+
+> ANSWER:
+
+Fit a model that uses *avgtemp*, *dayType*, and *cloudcover* to predict *volume* , including an interaction between *avgtemp* and *dayType* (cloudcover will be treated quantitatively). 
+
+```{r}
+#You'll need to provide your own code. Call the model something new so we can compare it to other models in the future. If you are counting, we're on model 4!
+```
+
+Interpret the slope coefficient for cloudcover in this model.
+
+> ANSWER:
+
+Check the regression conditions. Do you see any problems?
+
+```{r}
+#Provide your own code.
+```
+
+> ANSWER:
+
+Assuming there are no serious problems with the conditions, does the ANOVA (F) test suggest the regression model is useful for predicting volume?
+
+> ANSWER:
+
+Which individual predictors are significant according to the output?
+
+> ANSWER:
+
+We can also treat cloudcover as a categorical variable if we break it into groups. Suppose we decide to break it into three groups. Code to accomplish this and relabel the groups follows:
+
+```{r}
+RailTrail <- mutate(RailTrail, cloudgrp = cut(cloudcover, breaks = c(0, 3.333, 6.667, 10), labels = c("low", "medium", "high"), include.lowest = TRUE)) #this introduces the new function cut; can you figure out what cut does?
+tally(~ cloudgrp, data = RailTrail)
+```
+
+We have now generated low, medium, and high cloudcover groups in the variable *cloudgrp*. Again, we should always consider relationships between the variables, especially now that we have a new variable, but we forgo this in the interest of time and modeling here. 
+
+Now, let's fit a multiple linear regression model to the data using *cloudgrp*, *avgtemp*, *dayType*, and an interaction between *avgtemp* and *dayType* in order to predict *volume*. 
+
+```{r}
+#mod5 <- lm(volume ~ cloudgrp + dayType + avgtemp + avgtemp:dayType, data = RailTrail) #equivalent
+mod5 <- lm(volume ~ cloudgrp + avgtemp*dayType, data = RailTrail) 
+msummary(mod5)
+```
+
+Does the overall model appear to be useful in predicting volume? Explain how you know.
+
+> ANSWER:
+
+Pick a coefficient in the model. Interpret the coefficient in the regression model. Is the associated predictor significant in the model (while assuming conditions for inference hold)? How do you know? 
+
+> ANSWER:
+
+What would the regression equation be to predict volume on a day with low cloud cover and not a weekday? 
+
+> ANSWER:
+
+What would the regression equation be to predict volume on a day with medium cloud cover that is a weekday?
+
+> ANSWER:
+
+Interpret the R-squared for your model. How well does your model fit the data? 
+
+> ANSWER:
+
+Go check the conditions. Do you have any concerns about violations of conditions?
+
+> ANSWER:
+
+```{r}
+
+```
+
+
+Finally, here is a plot that demonstrates how to give a visualization of this model. It works particularly well in this case because we are plotting the two quantitative variables and we can use color and paneling/faceting to represent the two categorical variables. 
+
+
+```{r}
+gf_point(volume ~ avgtemp | cloudgrp, data = RailTrail, color = ~ dayType) %>% gf_lm()
+```
+
+
+### Favorite Model  
+After considering all of these models, which one is your favorite for predicting volume?
+
+> ANSWER:
+
+In future classes, we'll see how to test between models to see if it's really worth adding/removing variables. 
+
+
+
+

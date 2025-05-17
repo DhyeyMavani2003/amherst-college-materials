@@ -1,0 +1,1369 @@
+---
+title: "Example R Code/Graphs Using NHANES"
+author: "A.S. Wagaman"
+date: "Last Updated: July 23, 2018 "
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+    toc: true
+    toc_depth: 3
+  html_document:
+    fig_height: 3
+    fig_width: 5
+    toc: true
+    toc_depth: 3
+  word_document:
+    fig_height: 3
+    fig_width: 5
+    toc: true
+    toc_depth: 3
+---
+
+```{r, include = FALSE}
+library(mosaic) #swap to library instead of require
+library(broom)
+library(knitr)
+library(NHANES)
+library(leaps)
+library(DescTools)
+library(lmtest)
+library(Stat2Data)
+options(digits = 6)
+```
+
+## Introduction to This Resource
+
+In this document, you will find a series of coded examples on the NHANES data set, to demonstrate the code used in the course. The code uses the formula syntax of *mosaic* along with *ggformula* for graphics. This may mean some of the code looks different to you, depending on your introductory statistics course experience. The document is designed to be culmulative, covering the entire course, and is organized loosely by chapters/topics. All necessary packages are loaded at the start, and some may need to be installed, especially if you are working from your own machine. 
+
+
+## Data Set - NHANES
+
+First, we load the data set and learn a little bit about it. 
+
+```{r}
+data(NHANES)
+```
+
+
+Please reference the help file for NHANES for a lot more detail. 
+
+```{r, eval=FALSE}
+?NHANES
+```
+
+
+The three points below are from the help file.
+
+``This is survey data collected by the US National Center for Health Statistics (NCHS) which has conducted a series of health and nutrition surveys since the early 1960's. Since 1999 approximately 5,000 individuals of all ages are interviewed in their homes every year and complete the health examination component of the survey. The health examination is conducted in a mobile examination centre (MEC).'' 
+
+``NHANES can be treated, for educational purposes, as if it were a simple random sample from the American population.''
+
+``Please note that the data sets provided in this package are derived from the NHANES database and have been adapted for educational purposes. As such, they are NOT suitable for use as a research database.''
+
+The educational purpose data set has a large number of variables (76) and 10000 observations. It is useful to demonstrate methods due to having many characteristics of real data, but it has been fairly cleaned for our use. 
+
+## Review from Intro Stat (also Chapter 0 from Stat2)
+
+### Data Management
+
+These are basic commands to look at the data set and see what is there. 
+
+First, you may want a quick look at a few observations. There is a quick way to look at either the first 6 or last 6 observations.
+
+```{r}
+head(NHANES)
+tail(NHANES)
+```
+
+You may also want to know how many rows and columns are in the data set. You can read this in the Environment window, or try these commands. 
+
+```{r}
+ncol(NHANES)
+nrow(NHANES)
+```
+
+Finally, you may want a quick summary of the overarching data set. We demo three ways to do this below. You'd only really need to run one of these. Pick the one you like - though str and glimpse are probably more useful than summary.
+
+```{r}
+#summary(NHANES) #very long output!
+str(NHANES) #may be new
+glimpse(NHANES) #may be new
+```
+
+
+### Univariate Plots and Summaries
+
+To start with some data exploration, let's consider the relationship between Age and Education, so we have both a quantitative and a categorical variable of interest. 
+
+#### Descriptive Statistics
+
+```{r}
+#Quantitative Variable
+favstats(~ Age, data = NHANES)
+mean(~ Age, data = NHANES)
+sd(~ Age, data = NHANES)
+median(~ Age, data = NHANES)
+IQR(~ Age, data = NHANES)
+```
+
+
+```{r}
+#Categorical Variable
+tally(~ Education, data = NHANES)
+```
+
+#### Plots
+
+```{r}
+#Quantitative Variable
+gf_histogram(~ Age, data = NHANES) #count histogram
+gf_dhistogram(~ Age, data = NHANES) #density histogram
+
+#the 1 is here because of how ggplot2 works with boxplots; 
+#more appropriate for comparing distributions; see below; 
+#will update when support added for ~ var structure
+gf_boxplot(Age ~ 1, data = NHANES) 
+
+gf_density(~ Age, data = NHANES) #shaded densityplot
+gf_dens(~ Age, data = NHANES) #unshaded
+
+gf_qq(~ Age, data = NHANES) %>% gf_qqline()
+
+#Example overlay
+gf_dhistogram(~ Age, data = NHANES) %>%     #the symbol %>% is called a pipe or pipe operator
+  gf_dens(size = 2, col = "blue")
+```
+
+The pipe operator sends output from the first command to the second, reducing what you have to write, so it is fairly convenient.  
+
+```{r, fig.width = 6.5}
+#Categorical Variable
+gf_bar(~ Education, data = NHANES)
+gf_counts(~ Education, data = NHANES) #equivalent
+```
+
+
+### Bivariate Plots and Summaries
+
+As we turn to bivariate plots and summaries, we need to add two more variables to our discussion. So, let's add Weight and Work to go with Age and Education. 
+
+```{r, fig.width = 8, fig.height = 4.5}
+#Two Categorical Variables
+tally(Education ~ Work, data = NHANES)
+mosaicplot(Education ~ Work, data = NHANES)
+```
+
+
+```{r, fig.width = 6.5}
+#One Quantitative and One Categorical Variable
+favstats(Age ~ Education, data = NHANES)
+
+gf_histogram(~ Age | Education, data = NHANES)
+gf_dens(~ Age | Education, data = NHANES)
+gf_boxplot(Age ~ Education, data = NHANES)
+gf_violin(Age ~ Education, data = NHANES)
+gf_jitter(Age ~ Education, data = NHANES) #gf_point can be used if less overlap
+
+#Example Overlay
+gf_boxplot(Age ~ Education, data = NHANES, alpha = 0.05) %>%
+  gf_violin(alpha = 0.3, fill = "navy")
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+#Two Quantitative Variables
+with(NHANES, cor(Weight, Age, use = "pairwise.complete.obs"))
+
+gf_point(Weight ~ Age, data = NHANES)
+
+gf_point(Weight ~ Age, data = NHANES, alpha = 0.05) %>%
+  gf_lm()
+
+gf_point(Weight ~ Age, data = NHANES, alpha = 0.05) %>%
+  gf_smooth(se = FALSE, col = "green")
+```
+
+### Multivariate Plots
+
+A variety of plots are available that allow you to explore relationships between more than 2 variables. This is just a set of examples. We'll add one more quantitative variable here, HomeRooms. 
+
+```{r, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 5}
+gf_point(Weight ~ Age, data = NHANES, alpha = 0.5, color = ~ Work)
+
+gf_point(Weight ~ Age, data = NHANES, alpha = 0.5, color = ~ Work) %>%
+  gf_lm()
+
+gf_point(Weight ~ Age, data = NHANES, alpha = 0.5, color = ~ Work) %>%
+  gf_smooth(se = FALSE)
+
+gf_point(Weight ~ Age, data = NHANES, alpha = 0.05, size = ~ HomeRooms) 
+ 
+gf_point(Weight ~ Age, data = NHANES, alpha = 0.25, size = ~ HomeRooms, color = ~ Work) 
+
+gf_point(Weight ~ Age | Work, data = NHANES, alpha = 0.05, size = ~ HomeRooms) 
+
+gf_point(Weight ~ Age | Work, data = NHANES, alpha = 0.25, size = ~ HomeRooms, color = ~ Education)
+```
+
+
+### Fitting Linear Models and Related Plots
+
+One last bit of code that you should have some familiarity with is the code associated with fitting and assessing a linear model (plots and output). Here, we examine the relationship between Weight and BMI, with BMI as the response.
+
+```{r, message = FALSE, warning = FALSE}
+gf_point(BMI ~ Weight, data = NHANES) %>%
+  gf_lm() %>% 
+  gf_smooth(se = FALSE, color = "dark green") %>%
+  gf_labs(title = "Scatterplot of Relationship between Weight and BMI")
+```
+
+The scatterplot seems to show an expected positive relationship, though there may be some curvature in the pattern. A smoother can help illustrate this, so it was added to the plot. A title was also added to remind you about how to do that. X and Y axis labels can also be changed with that command.
+
+Now, suppose we want to fit an SLR here. We fit and save a model, can examine the output, and related plots.
+
+```{r}
+mod <- lm(BMI ~ Weight, data = NHANES)
+msummary(mod) #summary(mod) provides additional info, but isn't always needed
+confint(mod, conf.level  = 0.95) #obtain CIs for model parameters
+```
+
+The most commonly used assessment plots are accessed with mplot (or just plot if you want the base R versions).
+
+```{r, message = FALSE, warning = FALSE}
+mplot(mod, which = 1)
+mplot(mod, which = 2)
+```
+
+This clearly shows the curvature in the relationship, so we should make appropriate transformations and perhaps try other techniques to understand the relationship rather than relying on this SLR.
+
+You could also make these plots directly (with some enhanced titles) as follows:
+
+```{r}
+gf_histogram(~ resid(mod)) %>% gf_labs(title = "Histogram of Residuals (Counts)")
+gf_qq(~ resid(mod)) %>% gf_qqline() %>%
+  gf_labs(title = "QQ Plot of Residuals")
+gf_qq(~ rstandard(mod)) %>% gf_qqline() %>%
+  gf_labs(title = "QQ Plot of Standardized Residuals")
+```
+
+Finally, you may have some experience with making predictions. We will get more practice with this in class.
+
+```{r}
+predictFun <- makeFun(mod)
+predictFun(Weight = 130) #predict mean BMI for a Weight of 130
+```
+
+We will explore accessing residuals and fitted values with a new package *broom* in class, but those are also accessible this way:
+
+```{r}
+head(resid(mod))
+resid(mod)[100] #access 100th residual, due to missing data, is for observation 101
+head(fitted(mod))
+fitted(mod)[100] #access 100th fitted value, due to missing data, is for observation 101
+```
+
+
+## Data Wrangling
+
+The Datacamp course on introduction to the tidyverse covers a lot of this material. You should be comfortable with at least the four verbs - rename, mutate, select, and filter. You will also have exposure to group_by and summarize, as well as a little bit with joins, over the course of the class. We will have practice with these via Datacamp and in-class activities, so very brief examples are provided here.
+
+```{r}
+NHANES <- mutate(NHANES, BMI.Sq = BMI^2)
+NHANES2 <- NHANES %>% filter( Age < 35) %>%
+  dplyr::select(Age, Weight, Education, BMI, HomeRooms)
+#select can sometimes have interference from select functions in other packages
+#the addition of dplyr:: forces select to be pulled from dplyr
+NHANES2 <- rename(NHANES2, Education.Level = Education)
+```
+
+Next, we examine code relevant to material from our course using Stat2. 
+
+## Simple Linear Regression (Chapters 1-2)
+
+The material in 1.1-1.3 and 2.1 had relevant code covered in the review above.
+
+### Outliers (1.4)
+
+Here, we start to look at the broom package, which has some nice features. We can access residuals and fitted values from our models already, but broom allows us to add those, as well as some other useful statistics, to our data set for easier access. Recall we have a model predicting BMI using Weight, called mod, though the pattern is curved, so it's not really appropriate for linear regression without some adjustments. Let's examine a different relationship, one between BPSys1 and BPSys2, which are systolic blood pressure readings. These are expected to be highly correlated.
+
+```{r, message = FALSE, warning = FALSE}
+gf_point(BPSys2 ~ BPSys1, data = NHANES, alpha = 0.15)
+```
+
+Let's look at the QQplot of residuals and examine outliers via *augment* in broom. 
+
+```{r, message = FALSE, warning = FALSE}
+mod <- lm(BPSys2 ~ BPSys1, data = NHANES)
+msummary(mod)
+mplot(mod, which = 2)
+modData <- augment(mod)
+glimpse(modData)
+```
+
+Note this gives us the predictor(s), response, and various statistics in their own data set! It also removed NAs, but we still have the rownames (observation numbers), so we can identify observations in the original data set with large standardized residuals, for example.
+
+```{r}
+as.numeric(with(modData, which(abs(.std.resid) > 3)))
+```
+
+You could do this without the modData as well.
+
+```{r}
+as.numeric(which(abs(rstandard(mod)) > 3))
+```
+
+Let's demonstrate how to use modData to filter out unusual points based on standardized residuals with absolute value greater than 3 and examine the updated QQplot.
+
+```{r}
+modData %>%
+  filter(abs(.std.resid) <= 3) %>%
+  gf_qq(~ .std.resid) %>% gf_qqline()
+```
+
+This helps us to assess the impact of these points on the regression and underlying conditions. 
+
+### Chapter 2 - More on Simple Linear Regression
+
+This chapter contains a little bit more information on linear regression, so we continue to examine the relationship we had between the two blood pressure measurements. 
+
+We learn about Analysis of Variance as used to break down variation in the response in the context of regression. Typically this is viewed via an ANOVA table, which is easily accessed from the model object.
+
+```{r}
+aov(mod)
+anova(mod)#preferred command
+```
+
+Sometimes you don't need the whole table, and might want specific parts of the output, such as the F statistic, or the model coefficients. There are easy ways to access those as well from the model object. Here, we can see what is accessible in the *mod* object.
+
+```{r}
+names(mod)
+```
+
+We can also access values from the anova applied to the model object.
+
+```{r}
+names(anova(mod))
+```
+
+So, to pull out the model coefficients, F statistic, MSE, and R-squared respectively, we use:
+
+```{r}
+mod$coefficients
+anova(mod)$F
+anova(mod)$Mean[2]
+rsquared(mod)
+```
+
+Note that the F statistic is returned as a vector - the first entry matches the entry from the table. The Mean Square error is also returned as part of a vector, but it was in the second row of the table, so this is how to access it directly. You may also want to be familiar with accessing the Dfs for the degrees of freedom. 
+
+This chapter shows the test for correlation between two quantitative variables, though this is not really used at any other point in the course. Here, we demonstrate this on the blood pressure measurements. Strictly speaking, the method option is not needed because pearson is the default. 
+
+```{r}
+with(NHANES, cor.test(BPSys1, BPSys2), method = c("pearson"))
+```
+
+Finally, the chapter concludes with confidence intervals for the mean response and prediction intervals for an individual response. In order to access these, you need to create a new data frame that you want the predictions for. Basically, you need some values for the predictor variable. The predict function is used after that for both types of intervals, you just need to set the int option appropriately. 
+
+
+```{r}
+new.data <- data.frame(BPSys1 = c(109, 115, 122))
+
+predict(mod, new.data, int = "confidence", level = 0.90) #for CIs for mean response
+predict(mod, new.data, int = "prediction", level = 0.90) #for prediction intervals
+```
+
+
+## Multiple Linear Regression (Chapter 3)
+
+Now we enter into multiple linear regression. The good news is that you don't really need many new commands to work with this setting. We can literally *add* variables to our model (with plus signs!). 
+
+### Intro to MLR (3.1 - 3.2)
+
+As a light intro, let's try to predict the Systolic blood pressure average using just the first systolic and diastolic measurements. This means that we have two quantitative predictors. We fit the model, examine it's summary, basic plots, and ANOVA output with the same commands we already know!
+
+```{r, message = FALSE, warning = FALSE}
+mlrmod <- lm(BPSysAve ~ BPSys1 + BPDia1, data = NHANES)
+msummary(mlrmod)
+mplot(mlrmod, which = 1)
+mplot(mlrmod, which = 2)
+anova(mlrmod)
+```
+
+Note that you just have more rows in the output and the table now, corresponding to the increase in predictors. 
+
+### Parallel Lines (3.3)
+
+Our first MLR example had 2 quantitative predictors. But what happens when one is quantitative and one is categorical? 
+In terms of the commands used, absolutely nothing. But the output will look a little different. Let's use Gender and BPSys1 to try to predict BPSysAve. We can visualize this a bit first (these are similar to plots shown above). 
+
+```{r, message = FALSE, warning = FALSE}
+gf_point(BPSysAve ~ BPSys1, data = NHANES, alpha = 0.5, color = ~ Gender) %>%
+  gf_lm()
+
+gf_point(BPSysAve ~ BPSys1 | Gender, data = NHANES, alpha = 0.05) %>%
+  gf_lm()
+```
+
+This example was chosen because the relationship looks very similar between males and females. When considering this relationship, we have several models available to us:  
+
+BPSysAve ~ BPSys1 is the usual SLR.   
+BPSysAve ~ Gender would result in just examining the mean for each Gender, and likely not be very informative.  
+BPSysAve ~ BPSys1 + Gender is a model that would result in parallel lines, one for each Gender. In other words, the two groups would have the same slope for BPSys1, but could have different intercepts.  
+BPSysAve ~ BPSys1 * Gender is a model that would result in potentially different lines with differents slopes and intercepts. The interaction term, which can be examined individually as BPSys1:Gender is what allows the slopes to potentially differ. We examine the two MLRs below. Note that because "f" comes before "m" in the alphabet, female is taken to be the reference level. 
+
+```{r}
+paramod <- lm(BPSysAve ~ BPSys1 + Gender, data = NHANES)
+msummary(paramod)
+```
+
+Now suppose we want to plot this solution - it should have parallel lines. Here is how to do that, including use of *makeFun* to make predictions for the model to make the plot.
+
+```{r, message = FALSE, warning = FALSE}
+myFun <- makeFun(paramod)
+
+gf_point(BPSysAve ~ BPSys1, data = NHANES, color = ~ Gender) %>%
+  gf_fun(myFun(BPSys1, Gender = "female") ~ BPSys1, color = ~ "female") %>%
+  gf_fun(myFun(BPSys1, Gender = "male") ~ BPSys1, color = ~ "male")
+```
+
+
+The model with interaction is easily fit as well.
+
+```{r}
+intmod <- lm(BPSysAve ~ BPSys1 * Gender, data = NHANES) 
+# could also do BPSys1 + Gender + BPSys1:Gender
+msummary(intmod)
+```
+
+Plotting these lines was easy, since it was the default used above when we specified color as Gender in our first plot in this section. 
+
+Accessing the model coefficients, ANOVA table, residuals, etc. is all done with the same commands as previously shown. But, we are learning to build models, expanding our options of what we can incorporate, and thinking about relationships between predictors and how that could be related to the response. 
+
+### Polynomial Regression (3.4)
+
+In this section, we are just introduced to some models that use powers of predictors or some other common combinations of predictors. There are two notes I'd like to make for this section.
+
+First, to add a power of a variable to the model, you can't just raise it to the power in the lm command. See for example below.
+
+```{r}
+mod2 <- lm(BPSysAve ~ BPSys1 + BPSys1^2, data = NHANES)
+msummary(mod2)
+```
+
+The predictor doesn't show up squared, does it? (Though, you CAN do log, exp, and sqrt transformations in line). There are two ways around this. First, you can code it like this:
+
+```{r}
+mod3 <- lm(BPSysAve ~ BPSys1 + I(BPSys1^2), data = NHANES)
+msummary(mod3)
+```
+
+The I() makes the system realize it should be squaring the predictor to include, and can be done with any power. You could alternatively add the squared variable to the data set, and then fit the model.
+
+```{r}
+NHANES <- mutate(NHANES, BPSys1Sq = BPSys1^2)
+mod4 <- lm(BPSysAve ~ BPSys1 + BPSys1Sq, data = NHANES)
+msummary(mod4)
+```
+
+Next, remember that Var1 * Var2 includes both main effects and the interaction. So for example, the code below has superfluous pieces.
+
+```{r}
+intmod2 <- lm(BPSysAve ~  BPSys1 + Gender + BPSys1 * Gender, data = NHANES) 
+msummary(intmod2)
+```
+
+This is the same output we had above from intmod, which was just BPSys1 * Gender. 
+
+The text describes a complete second order model which involves two quantitative predictors, both with linear and quadratic terms, and their interaction. We fit an example model using the blood pressure measurements.
+
+```{r}
+mod5 <- lm(BPSysAve ~ BPSys1 * BPSys2 + I(BPSys1^2) + I(BPSys2^2), data = NHANES)
+msummary(mod5)
+```
+
+
+### Multicollinearity (3.5)
+
+Sometimes the predictors are highly related to one another (either pairwise or in a linear combination). If the relationship is strong, problems can occur. To examine this issue, variance inflation factors can be examined. Here, we fit a modest sized model to predict BPSysAve and look at the VIFs.
+
+```{r}
+mymod <- lm(BPSysAve ~ BPSys1 + Age + AgeMonths + Weight + BMI, data = NHANES)
+msummary(mymod)
+car::vif(mymod)
+```
+
+The VIFs above 4-5 indicate potential issues. Here, there is an obvious (expected!) issue between Age and AgeMonths - AgeMonths is just Age times 12, so we don't need both in the model. Also, here we see issues with BMI and Weight which is because BMI and Weight are highly related (though again, the relationship doesn't need to be pairwise). This example with Age demonstrates one issue these relationships can cause. Neither Age nor AgeMonths is significant at a 0.05 level, but if you remove AgeMonths, Age becomes significant. 
+
+```{r}
+mymod <- lm(BPSysAve ~ BPSys1 + Age + Weight + BMI, data = NHANES)
+msummary(mymod)
+car::vif(mymod)
+```
+
+You can also obtain generalized VIFs when categorical predictors are involved, though these ideas are not presented in the text. For example,
+
+```{r}
+mymod <- lm(BPSysAve ~ BPSys1 + Age + Weight + Work, data = NHANES)
+msummary(mymod)
+car::vif(mymod)
+```
+
+These values do not seem to indicate any issues. Remember that descriptive statistics are meant to be a tool to assist you, and you need to be realistic with your interpretations of what you see. For example,
+
+```{r}
+mymod <- lm(BPSysAve ~ BPSys1 + Weight + I(Weight^2), data = NHANES)
+msummary(mymod)
+car::vif(mymod)
+```
+
+Should we be upset about the VIFs of 19 here for Weight and Weight^2, and use that as motivation for adjusting the model?  (There may be other reasons to adjust the model, but you should realize that we would expect these values to be high.)
+
+
+### Nested F-tests (3.6) 
+
+To test for removing subsets of variables at a time, you need nested models, and then we run nested F procedures. 
+
+```{r}
+modmed <- lm(BPSysAve ~ BPSys1 + Weight + Age + Gender, data = NHANES)
+modsmall <- lm(BPSysAve ~ BPSys1 + Weight, data = NHANES)
+
+anova(modsmall, modmed) #ascending order of complexity
+```
+
+Note that the models need to be fit on the same dataset (meaning, if observations are removed from one model due to NAs but not the other, this command will generate an error message.) You can do more than 2 comparisons at a time, but be careful with your interpretations in that case. Also, notice that if you then do pairwise comparisons, your F statistics and p-values will be slightly off compared to the multiple models at once results, because the df are being adjusted for testing multiple models at once. This is usually not a large enough concern to necessitate doing all comparisons pairwise, however, the CONCEPT of multiple testing and adjusting significance levels is one you should work at understanding. 
+
+## Topics in MLR (Chapter 4)
+
+### Added Variable Plots (4.1)
+
+You can construct added variable plots by obtaining the residuals directly from the two regressions yourself or by using this function, modified from one written by Ben Baumer. Run this entire chunk to obtain the function (and be sure to put it in your markdown file as well.)
+
+
+```{r}
+plotAddedVar <- 
+  function(
+    fm, var.test, 
+    title = paste("Added Variable Plot:", var.test), 
+    ylab = deparse(fm1$call),
+    xlab = deparse(fm2$call),
+    ...) {
+  formula <- formula(fm)
+  fm1 <- update(fm, formula. = substitute(~ . - x, list(x = as.name(var.test))))
+  #fm2 <- update(fm, formula. = substitute(x ~ . , list(x = as.name(var.test))))
+  fm2 <- update(fm, formula. = substitute(x ~ . - x, list(x = as.name(var.test))))
+   
+  PlotData <- data.frame(y = resid(fm1), x = resid(fm2))
+  gf_point(y ~ x, data = PlotData, ...) %>%
+    gf_lm() %>%
+    gf_labs(
+      title = title, 
+      y = ylab, x = xlab 
+    )
+}
+```
+
+We demonstrate on the first example MLR model, using the first systolic and diastolic blood pressures to predict the systolic average. 
+
+```{r, message = FALSE, warning = FALSE}
+plotAddedVar(mlrmod, "BPDia1", alpha = 0.3)
+```
+
+You can change the labels on the axes if you want, because they usually run off with MLRs of any decent size.
+
+```{r, message = FALSE, warning = FALSE}
+plotAddedVar(mlrmod, "BPDia1", alpha = 0.3, ylab = "Resid from BPSysAve vs. Other Preds",
+             xlab = "Resid from BPDia1 vs. Other Preds")
+```
+
+
+### Automated Variable Selection (4.2)
+
+This section includes four different automated variable selection methods. Code to execute these methods in R is contained in the leaps package. Other packages have functions that can do this as well, but we'll just use *regsubsets* from leaps. 
+
+To demonstrate this code, we need a model to start from.
+
+```{r}
+modall <- lm(BPSysAve ~ BPSys1 + BPDia1 + Weight + Age + Gender + HomeRooms + Height + BMI,
+             data = NHANES)
+msummary(modall)
+```
+
+Here, we chose a model that has some predictors we probably don't need given the presence of other predictors (based on previous exploration). We start with best subsets code. We can specify the number of best models of each size to examine, though the default is one. With the output, we can examine all the "best" models and compare their statistics, to then use to choose one. 
+
+```{r}
+best <- regsubsets(BPSysAve ~ BPSys1 + BPDia1 + Weight + Age + Gender + HomeRooms
+                   + Height + BMI, data = NHANES, nbest = 1)
+with(summary(best), data.frame(rsq, adjr2, cp, rss, outmat))
+```
+
+Mallows Cp is the statistic described in your text. Other criteria exist, including AIC and BIC which are not described in your text. AIC is what R uses by default. The AIC value for a model can be obtained using the AIC command, once you have selected a model. Here, suppose I choose the minimum Cp model as the one I want to work with, and I want it's AIC value. Remember, you want to minimize AIC. 
+
+```{r}
+bestmodel <- lm(BPSysAve ~ BPSys1 + BPDia1 + Weight + Age + Gender + Work + BMI,
+                data = NHANES)
+AIC(bestmodel)
+```
+
+Now we demonstrate the other 3 methods with *regsubsets*, and we'll put fewer statistics in the output since the book focuses on Cp. Backward elimination starts with a full model and removes predictors one at a time. Here, you can set the maximum size of subsets to examine with the nvmax option. The default is 8, which is fine for this example. If you have a very large set of predictors, you may need to adjust that value.  
+
+```{r}
+backward <- regsubsets(BPSysAve ~ BPSys1 + BPDia1 + Weight + Age + Gender + HomeRooms
+                       + Height + BMI, data = NHANES, method = "backward", nbest = 1)
+with(summary(backward), data.frame(cp, outmat))
+```
+
+Next, we examine forward selection. Again, you could adjust *nvmax* if you wanted to control how large the models get. The default is 8. 
+
+```{r}
+forward <- regsubsets(BPSysAve ~ BPSys1 + BPDia1 + Weight + Age + Gender + HomeRooms
+                      + Height + BMI, data = NHANES, method = "forward", nbest = 1)
+with(summary(forward), data.frame(cp, outmat))
+```
+
+Finally, stepwise regression is performed using the *seqrep* option for the method.
+
+```{r}
+stepwise <- regsubsets(BPSysAve ~ BPSys1 + BPDia1 + Weight + Age + Gender + HomeRooms
+                       + Height + BMI, data = NHANES, method = "seqrep", nbest = 1)
+with(summary(stepwise), data.frame(cp, outmat))
+```
+
+For each of these, you get to select the model you want to use, and then fit it in order to work with it further. Automated methods are not a substitute for a statistician!
+
+Other functions such as stepAIC in the MASS library will perform similar operations. 
+
+### Unusual Points (4.3)
+
+To identify unusual points, we can use graphs and descriptive statistics. Your book's R companion uses *ls.diag* as the function to find the necessary descriptive statistics. But the statistics it produces, with the exception of the studentized residuals, are also available in the augmented model from *augment*. So, we demo both approaches below, and show you how to get the studentized residuals separately. 
+
+With this model, we can see that there are some points we want to investigate. 
+
+```{r, message = FALSE, warning = FALSE}
+mymod <- lm(BPSysAve ~ BPSys1 + Age + AgeMonths + Weight + BMI, data = NHANES)
+msummary(mymod)
+mplot(mymod, which = 1)
+mplot(mymod, which = 2)
+```
+
+First, we examine the other diagnostic plots that come with any model fit. 
+
+```{r, message = FALSE, warning = FALSE}
+mplot(mymod, which = 3)
+mplot(mymod, which = 4)
+mplot(mymod, which = 5)
+mplot(mymod, which = 6)
+```
+
+Note the combination of residuals, leverage, and cook's distance used throughout these plots. 
+
+Next, we want to examine how to get the statistics and save them.
+
+```{r}
+influencestat <- ls.diag(mymod)
+names(influencestat)
+```
+
+Note here that you have the standardized and studentized residuals, cooks distances, and leverages (hat). You can add these variables to your data set with mutate. 
+
+There are a few other ways to access the statistics. Here, we use a function to obtain each. 
+
+```{r}
+std.res <- rstandard(mymod)
+stu.res <- rstudent(mymod)
+cooks <- cooks.distance(mymod)
+hats <- hatvalues(mymod)
+```
+
+The augmented data set also contains some of these descriptive statistics. The only one it leaves out is the studentized residuals, so you could easily add that, as shown below.
+
+```{r}
+NHANESaug <- augment(mymod) %>% mutate(.stu.resid = rstudent(mymod))
+names(NHANESaug)
+```
+
+Then, we can use commands like which and filter to help isolate observations that are unusual based on our chosen criteria and create datasets without those unusual points to study their effect on the model.
+
+For example, suppose we want to examine the relationship only with observations with standardized residuals less than 3 in absolute value, and we want to know which observations were left out. First, we can make a new data set with those observations left out.
+
+```{r}
+NHANESaugnoup <- filter(NHANESaug, abs(.std.resid) < 3)
+mymodnoup <- lm(BPSysAve ~ BPSys1 + Age + AgeMonths + Weight + BMI, data = NHANESaugnoup)
+msummary(mymodnoup)
+```
+
+Does it look like there have been any major changes to the model?
+
+Now, what points were left out? We can take those observations and make them into a dataframe for further investigation.
+
+```{r}
+NHANESup <-filter(NHANESaug, abs(.std.resid) >= 3)
+nrow(NHANESup)
+NHANESup$.rownames
+unusualpoints <- as.numeric(NHANESup$.rownames)
+```
+
+39 points were left out, and because augment passed along their observation number, we can see which observations they were fairly easily. If you wanted, you could store those entries as a vector to use in other operations. Note that you have a data set of the unusual points in NHANESup so you can investigate them all you like. 
+
+### Randomization Permutation-Based Procedures (4.5)
+
+Here, we demonstrate running randomization permutation-based procedures. The examples cover examining a correlation and a slope for a main effect.  Please ASK for assistance if you are trying to study an interaction effect, as that is a bit more complicated than your book examples. 
+
+First, we examine a randomization procedure for a correlation.
+
+
+```{r, cache = TRUE}
+cor.actual <- with(NHANES, cor(BPDia1,Age, use="pairwise.complete.obs"))
+cor.actual
+
+set.seed(45)
+rtest <- with(NHANES, do(10000) * cor(BPDia1, shuffle(Age), use = "pairwise.complete.obs")) 
+gf_dens(~ cor, data = rtest) %>% 
+  gf_lims(x = c(-0.3, 0.3)) %>%
+  gf_labs(title = "Correlation between BPDia1 and Shuffled Age") %>%
+  gf_vline(xintercept = ~ cor.actual, color = "red")
+```
+
+We can see that the observed correlation is well removed from the randomization distribution. We could compute empirical p-values and confidence intervals for the shuffled correlations as follows.
+
+```{r}
+#provides area below cor.actual based on rtest$result distribution
+pdata(~ cor, cor.actual, data = rtest)
+#area above (if you want upper tail)
+pdata(~ cor, cor.actual, data = rtest, lower.tail = FALSE)
+qdata(~ cor, c(0.025, 0.975), data = rtest)
+```
+
+As expected, this confidence interval is fairly symmetric around 0. We see the observed value of 0.25 is clearly outside the CI. 
+
+Next, we examine a procedure for a slope in an MLR.
+
+```{r, cache = TRUE, warning = FALSE}
+mlrmod <- lm(BPSysAve ~ BPSys1 + Age + Weight + BMI, data = NHANES)
+coef(mlrmod)
+coef(mlrmod)[3]
+
+slopetest <- do(10000)*(lm(BPSysAve ~ BPSys1 + shuffle(Age) + Weight + BMI, data = NHANES))
+names(slopetest)
+
+gf_dens(~ Age, data = slopetest) %>% 
+  gf_lims(x = c(-0.01, 0.01)) %>%
+  gf_labs(title = "Slope Coefficients for Shuffled Age") %>%
+  gf_vline(xintercept = ~ coef(mlrmod)["Age"], color = "red")
+
+gf_histogram(~ Age, data = slopetest) %>% 
+  gf_lims(x = c(-0.01, 0.01)) %>%
+  gf_labs(title = "Slope Coefficients for Shuffled Age") %>%
+  gf_vline(xintercept = coef(mlrmod)["Age"], color = "red")
+```
+
+If you need the empirical p-value or CI, again that can be done with:
+
+```{r}
+pdata(~ Age, coef(mlrmod)["Age"], data = slopetest, lower.tail = FALSE) 
+qdata(~ Age, c(0.025, 0.975), data = slopetest)
+```
+
+
+### Bootstrap (4.6)
+
+The final section of chapter 4 illustrates bootstrap procedures. These procedures are randomization-based, but differ from permutation procedures. Be sure you understand the difference!
+
+We examine the same relationship with the slope of Age as above in the permutation section. 
+
+```{r, cache = TRUE}
+bootstrap <- do(10000) * lm(BPSysAve ~ BPSys1 + Age + Weight + BMI,
+              data = resample(NHANES))$coefficients
+# might take a second to run!
+names(bootstrap) #saved slope coefficients
+
+gf_dens(~ Age, data = bootstrap) %>% 
+  gf_labs(title = "Bootstrap Distribution of Slope Coefficients for Age") %>%
+  gf_vline(xintercept = ~ coef(mlrmod)["Age"], color = "red") %>%
+  gf_vline(xintercept = ~ 0, color = "blue")
+```
+
+We can see that the observed slope is near the center of the distribution, and the value of 0 is off to the far side of the distribution. 
+
+Your textbook illustrates three methods to create CIs using the bootstrapped values. The shape of the bootstrapped value distribution is what determines what method is appropriate. This also shows how to attain a critical value (such as 1.96), if you want to change the confidence level, in reference to Method 1. 
+
+```{r}
+#Method 1 - Bootstrap distribution is roughly normally distributed
+
+mycoef <- coef(mlrmod)["Age"]
+mycoef + c(-1.96, 1.96) * sd(bootstrap$Age) #95% CI
+
+qnorm(0.95) #90% critical value. 5% in upper tail + 5% in lower tail would yield 90% CI
+```
+
+
+```{r}
+#Method 2 - Bootstrap distribution is roughly symmetric
+qdata(~ Age, c(0.025, 0.975), data = bootstrap)
+```
+
+
+```{r}
+#Method 3 - Bootstrap distribution is skewed
+q.ul <- qdata(~ Age, c(0.025, 0.975), data = bootstrap)$quantile
+c(2*coef(mlrmod)["Age"] - q.ul[2], 2*coef(mlrmod)["Age"] - q.ul[1])
+```
+
+For this example, we see that all three CIs are similar, and do not contain 0. 
+
+## One-Way ANOVA and Multiple Comparisons (Chapter 5, selected parts of Chapter 7)
+
+### ANOVA Output
+
+For ANOVA commands, there is nothing really new. We use *lm* and *anova*, though you can use *aov* as well.
+
+```{r}
+anovamod <- lm(BPSysAve ~ Race1, data = NHANES)
+anova(anovamod)
+
+
+aovdirect <- aov(BPSysAve ~ Race1, data = NHANES)
+summary(aovdirect) #has a little more information
+```
+
+Of course, we want to check conditions as well, so we return to using *mplot*.
+
+```{r, message = FALSE, warning = FALSE}
+mplot(anovamod, which = 1)
+mplot(anovamod, which = 2)
+```
+
+For descriptive statistics, recall we can use favstats to get summaries by group.
+
+```{r}
+favstats(BPSysAve ~ Race1, data = NHANES)
+```
+
+Side-by-side boxplots are also useful for checking conditions and seeing if the procedure is even necessary.
+
+### Multiple Comparisons (5.4 and 7.2)
+
+If we believe the conditions are met, and we've determined that we believe at least one significant difference in means is present, we can use multiple comparisons procedures to find the difference. Here, we illustrate code used by your textbook as well as a function from a different package *DescTools* that does the same computations. Three multiple comparisons methods are covered in your text
+
+```{r}
+# Book Code
+with(NHANES, pairwise.t.test(BPSysAve, Race1, p.adj = "none")) #Fisher's
+with(NHANES, pairwise.t.test(BPSysAve, Race1, p.adj = "bonf")) #Bonferroni
+
+TukeyHSD(anovamod) #just feed it the model, Tukey's
+```
+
+The new function that you may like due to the structure is PostHocTest. You can call this on an aov object, or do the anova in line.
+
+```{r}
+myanova <- aov(BPSysAve ~ Race1, data = NHANES)
+PostHocTest(myanova, method = "lsd") #use on an object
+
+PostHocTest(aov(BPSysAve ~ Race1, data = NHANES), method = "lsd") #done inline; Fisher's LSD
+```
+
+Changing methods is just changing the option.
+
+```{r}
+PostHocTest(aov(BPSysAve ~ Race1, data = NHANES), method = "hsd") #Tukey's HSD
+PostHocTest(aov(BPSysAve ~ Race1, data = NHANES), method = "bonf") #Bonferroni
+```
+
+There are other ways you can obtain and visualize these results too, at least with Tukey's HSD. Here, we see 95% CIs plotted. Note how there is a dashed red line at 0 to help you see which CIs miss 0. 
+
+```{r}
+mplot(TukeyHSD(lm(BPSysAve ~ Race1, data = NHANES)))
+```
+
+
+## Two-Way ANOVA (Chapter 6)
+
+With Two-Way ANOVA, we have two categorical predictors. There are two models to consider, the additive model and the model with interaction. 
+
+### Additive Model (6.1)
+
+Remember that examining the relationship between the response and the predictors is very important. 
+
+```{r, message = FALSE, warning = FALSE, fig.width = 6.5}
+favstats(BPSysAve ~ Race1 + Gender, data = NHANES)
+
+gf_boxplot(BPSysAve ~ Race1 | Gender, data = NHANES)
+gf_boxplot(BPSysAve ~ Gender | Race1, data = NHANES)
+```
+
+We fit the model and check conditions using the usual commands. 
+
+```{r, message = FALSE, warning = FALSE}
+twowaymod <- lm(BPSysAve ~ Race1 + Gender, data = NHANES)
+msummary(twowaymod) #note this isn't as useful now because we need separate F statistics
+anova(twowaymod) #works on the lm object to get the desired table
+mplot(twowaymod, which = 1)
+mplot(twowaymod, which = 2)
+```
+
+I will also demo a few ways to get other tables that might be useful. 
+
+```{r}
+#if you want to save the model as an ANOVA object
+aovmod <- aov(BPSysAve ~ Race1 + Gender, data = NHANES) 
+summary(aovmod) #get the ANOVA summary table
+model.tables(aovmod) #more summary tables; to get effect summaries
+model.tables(aovmod, type = "means")
+```
+
+Finally, for multiple comparisons, Tukey's method is still easily applied, and PostHocTest can be used as well. pairwise.t.test should NOT be used, because it only works with one categorical predictor. 
+
+```{r}
+TukeyHSD(twowaymod) #just feed it the model
+
+PostHocTest(aov(BPSysAve ~ Race1 + Gender, data = NHANES), method = "lsd") #Fisher's LSD
+PostHocTest(aov(BPSysAve ~ Race1 + Gender, data = NHANES), method = "bonf") 
+PostHocTest(aov(BPSysAve ~ Race1 + Gender, data = NHANES), method = "hsd")
+```
+
+
+### Model with Interaction (6.2-6.3)
+
+If we believe there is interaction, we can fit a two-way model with interaction. To help see if an interaction term may be useful, we can use an interaction plot, shown below. 
+
+```{r, message = FALSE, warning = FALSE}
+gf_line(BPSysAve ~ Race1, color = ~ Gender, data = NHANES, group = ~ Gender, stat = "summary")
+# then reverse roles
+gf_line(BPSysAve ~ Gender, color = ~ Race1, data = NHANES, group = ~ Race1, stat = "summary") 
+```
+
+The lines do not appear to be parallel, so we may want to try an interaction term.
+
+```{r, message = FALSE, warning = FALSE}
+twowaymodint <- lm(BPSysAve ~ Race1 * Gender, data = NHANES)
+
+anova(twowaymodint) #works on the lm object to get the desired table
+mplot(twowaymodint, which = 1)
+mplot(twowaymodint, which = 2)
+```
+
+There appear to be issues with the conditions, but we demo how to perform multiple comparisons for the sake of the example. 
+
+```{r}
+TukeyHSD(twowaymodint) #just feed it the model
+
+PostHocTest(aov(BPSysAve ~ Race1 * Gender, data = NHANES), method = "lsd") #Fisher's LSD
+PostHocTest(aov(BPSysAve ~ Race1 * Gender, data = NHANES), method = "bonf") 
+PostHocTest(aov(BPSysAve ~ Race1 * Gender, data = NHANES), method = "hsd")
+```
+
+
+## Design (Chapter 8, 8.2)
+
+Three of the sections here cover theoretical concepts. Only section 8.2 contains material that references R code, and the book doesn't demonstrate any of the code. Basically, we are applying randomization tests (like those from 4.5) but in an ANOVA setting, so the code will appear similar to that. 
+
+### Randomization Test for Main Effect from Text
+
+We use the one-way ANOVA model previously considered first. 
+
+```{r}
+anovamod <- lm(BPSysAve ~ Race1, data = NHANES)
+obsF <- anova(anovamod)$"F value"[1]
+obsF
+```
+
+Now, we randomize:
+
+```{r, cache = TRUE}
+set.seed(40) #make the results reproducible
+anovaresult <-do(10000)*(anova(lm(BPSysAve ~ shuffle(Race1), data = NHANES))$"F value"[1])
+
+
+gf_dens(~ result, data = anovaresult) %>% 
+  gf_lims(x = c(0, 23.5)) %>%
+  gf_labs(title = "Randomization Distribution for F from ANOVA") %>%
+  gf_vline(xintercept = ~ obsF, color = "red")
+
+pdata(~ result, obsF, data = anovaresult, lower.tail = FALSE) 
+```
+
+We can see that the observed F value is well removed from the randomization distribution, with an empirical p-value of 0. 
+
+You can study two-way ANOVA in the same way, shuffling one predictor at a time. However, if you want to study an interaction, then please ask for assistance. The key is making sure that you are generating the randomization distribution correctly and that will need to be done differently if you are examining an interaction and want to leave the main effects intact. The example below illustrates one way this can be done for an interaction effect. Again, please ASK for assistance for these cases. 
+
+```{r}
+twowaymodint <- lm(BPSysAve ~ Race1 * Gender, data = NHANES)
+anova(twowaymodint)
+obsF <- anova(twowaymodint)$"F value"[3] # store the interaction F statistic
+obsF
+```
+
+Here, we realize that not all observations were included in the analysis, so we focus the randomization procedure on only those observations included. Here, we wrote a function to obtain the permuted interaction F statistics, and used do to repeat the procedure. This first chunk sets up the data and interaction function. 
+
+
+```{r}
+newNHANES <- augment(twowaymodint) %>% select("BPSysAve", "Race1", "Gender")
+twowaymod <- lm(BPSysAve ~ Race1 + Gender, data = newNHANES) #main effects only
+residuals <- resid(twowaymod)
+fitted <- fitted(twowaymod)
+newAugData <- augment(twowaymod)
+
+#run all at once to get the function
+getInteractionF <- function(){
+  tempres <- shuffle(newAugData$.resid)  
+  tempresponse <- newAugData$.fitted + tempres
+  modtemp <- lm(tempresponse ~ Race1 * Gender, data = newAugData)
+  anova(modtemp)$"F value"[3] #to get the interaction F
+}
+```
+
+Now that we have the function, we set a seed and run it many times!
+
+```{r, cache = TRUE}
+set.seed(230)
+permF <- do(10000)*getInteractionF()
+```
+
+And now we can look at our results!
+
+```{r}
+gf_dens(~ getInteractionF, data = permF) %>% 
+  gf_labs(title = "Randomization Distribution for Interaction F") %>%
+  gf_vline(xintercept = ~ obsF, color = "red")
+
+pdata(~ getInteractionF, obsF, data = permF, lower.tail = FALSE) 
+```
+
+Again, for these more complicated examples, please ask for assistance!
+
+## Simple Logistic Regression (Chapter 9)
+
+In logistic regression, we encounter a categorical (binary) response variable. In the simplest case, as in the settingl of chapter 9, we also have a quantitative predictor variable. In order to deal with the binary response, we make some major adjustments in order to get reasonable predictions. A logit function is employed, and we swap to what are called generalized linear models or glms. Please see your text and class notes for more details. Here, we illustrate code related to the setting.
+
+First, we consider an appropriate logistic setting for NHANES. Can we predict whether a person has smoked at least 100 cigarettes in their life (Smoke100) based on average Systolic blood pressure (BPSysAve)?
+
+```{r, message = FALSE, warning = FALSE}
+gf_boxplot(BPSysAve ~ Smoke100, data = NHANES)
+tally(~ Smoke100, data = NHANES)
+```
+
+"Smokers" seem to have slightly higher BPSysAve values. We want to treat Smoke100 as the response, so we can filter out the NA observations, and make a numeric version of the response for plotting purposes. Note that 0 indicates a non-smoker and 1 indicates a smoker. 
+
+```{r}
+NHANES2 <- filter(NHANES, Smoke100 != "NA") %>% mutate(SmokeNum = as.numeric(Smoke100)-1)
+```
+
+Now we plot the relationship with SmokeNum (numeric version) as the response.
+
+```{r, message = FALSE, warning = FALSE}
+gf_point(SmokeNum ~ BPSysAve, data = NHANES2) %>%
+  gf_lm()
+```
+
+Clearly, fitting a linear regression here makes no sense. The predictions are not ever 0 or 1, which are the only possible values of the response. This is why we need logistic regression.
+
+Let's take a look at how to fit the model, then examine some more plots. The *glm* function works a lot like *lm*. It requires a numeric version of the response. The default family is binomial, so you don't actually need to specify that here, but this makes it obvious it is logistic regression. 
+
+```{r}
+logmod <- glm(SmokeNum ~ BPSysAve, data = NHANES2, family = binomial(logit))
+msummary(logmod)
+```
+
+You can get confidence intervals the usual way as well.
+
+```{r, message = FALSE, warning = FALSE}
+confint(logmod)
+```
+
+Note that for interpretation reasons, you might want:
+
+```{r, message = FALSE, warning = FALSE}
+exp(confint(logmod))
+```
+
+There are a number of plots for us now to explore. 
+
+First, to check conditions, we might want to make what is called an empirical logit plot. Before we introduce a function to make this plot, we explore some related options. The idea here is you want to look for a linear relationship between the predictor and logit of the probability that the response is a success.
+
+The main way to investigate this with a continuous predictor is to "bin" the values so that you can evaluate the logit for the bin (because you may not have repeated predictor observations). We can create the bins, then plot the logit for the bin along with the original data points to examine the relationship.
+
+We examine the proportion of smokers over the bins. The logit is a transformation of this that will give a similar shape, so you can just use that. 
+
+```{r, message = FALSE, warning = FALSE}
+#create the bins
+pred_bins <-  quantile(NHANES2$BPSysAve, probs = 0:6/6, na.rm = TRUE)
+NHANES_binned <- NHANES2 %>%
+  mutate(bin = cut(BPSysAve, breaks = pred_bins, include.lowest = TRUE)) %>%
+  group_by(bin) %>%
+  summarize(mean_BPSysAve = mean(BPSysAve), 
+            smoke_rate = mean(SmokeNum),
+            logit_smoke_rate = logit(mean(SmokeNum)))
+
+gf_point(smoke_rate ~ mean_BPSysAve, data = NHANES_binned) %>% 
+  gf_line()
+```
+
+
+Rather than have to do this by hand though, you might want a function that will do it for you. 
+
+
+```{r}
+# run this entire chunk to get the function, then call as demonstrated below
+emplogitplot <- function(resp, pred, numbreak = 10) {
+  # assumes resp is dichotomous with values 0 and 1
+  tmpGroup <- cut(pred, breaks = numbreak)
+  binned.y <- mosaic::mean(~ resp | tmpGroup)
+  binned.x <- mosaic::mean(~ pred | tmpGroup)
+  logy <- mosaic::logit(binned.y)
+  ds <- data.frame(logy, binned.x)
+  gf_point(logy ~ binned.x, cex = 2, pch = 19, data=ds) %>%
+    gf_line() %>%
+    gf_labs(x = "Binned Predictor", y = "Empirical Logit for Bin")
+} 
+```
+
+Then we can call the function, and you can change the number of breaks. 
+
+```{r, message = FALSE, warning = FALSE}
+with(NHANES2, emplogitplot(SmokeNum, BPSysAve, 8))
+```
+
+Now suppose you want to plot the fitted line on the probability scale (meaning on the binned data). You need the binned data as above, and then,
+
+
+```{r, message = FALSE, warning = FALSE}
+data_space <- gf_point(smoke_rate ~ mean_BPSysAve, data = NHANES_binned) %>% 
+  gf_line()
+logmodaugment <- logmod %>% augment(type.predict = "response")
+
+# logistic model on probability scale
+data_space %>%
+  gf_line(.fitted ~ BPSysAve, data = logmodaugment, color = "red")
+```
+
+This example may not be the best, so here is another example looking at medical school applicant GPAs and probability of acceptance to medical school. Note that this code uses ggplot2 syntax, not ggformula as above. 
+
+```{r}
+#Code from Ben Baumer
+data(MedGPA)
+mod <- glm(Acceptance ~ GPA, data = MedGPA, family = binomial)
+
+gpa_bins <- quantile(MedGPA$GPA, probs = 0:6/6)
+MedGPA_binned <- MedGPA %>%
+  mutate(bin = cut(GPA, breaks = gpa_bins, include.lowest = TRUE)) %>%
+  group_by(bin) %>%
+  summarize(mean_GPA = mean(GPA), 
+            acceptance_rate = mean(Acceptance))
+
+# binned points and line
+data_space <- ggplot(data = MedGPA_binned, aes(x = mean_GPA, y = acceptance_rate)) + 
+  geom_point() + geom_line()
+data_space
+
+# augmented model
+MedGPA_plus <- mod %>% augment(type.predict = "response")
+
+# logistic model on probability scale
+data_space +
+  geom_line(data = MedGPA_plus, aes(x = GPA, y = .fitted), color = "red")
+```
+
+The curve here shows the more characteristic S (or reverse S) shape. 
+
+We briefly look at code to obtain p-values and to perform the likelihood ratio test.
+
+```{r}
+msummary(logmod)
+```
+
+The summary has the null and residual deviances. The difference between them is the G statistic from your text. The difference in df is the other part needed to obtain these results.
+
+```{r}
+G <- 9581.9 - 9541.6; G
+lrtdf <- 6970 - 6969; lrtdf
+pchisq(G, df = lrtdf, lower.tail = FALSE)
+```
+
+Equivalently, the computer can do the computations with:
+
+```{r}
+lrtest(logmod)
+```
+
+To wrap up this section, we examine the predictions a bit more closely. 
+
+```{r}
+logmodaugment <- logmod %>% augment(type.predict = "response")
+names(logmodaugment)
+head(logmodaugment)
+```
+
+If you examine the augmented data set, since we asked for the correct type of prediction, our .fitted values are the probability estimated for each individual to be a smoker. 
+
+```{r}
+favstats(~ .fitted, data = logmodaugment)
+```
+
+If we wanted to make binary predictions for each individual, we could round to the nearest integer (i.e., anyone over 50% chance of being a smoker would be labelled a smoker).
+
+```{r}
+logmodaugment <- mutate(logmodaugment, binprediction = round(.fitted, 0))
+tally(~ binprediction, data = logmodaugment)
+559/6971
+```
+
+We can see that using this strategy, only 559 individuals (8 percent) are predicted to be smokers. We can examine how well we did with the predictions by making a confusion matrix - looking at observed values versus predicted values.
+
+```{r}
+with(logmodaugment, table(SmokeNum, binprediction))
+correct <- (3602 + 298)/6971; correct
+```
+
+We are only 55.9 percent correct on our predictions. Many folks are being labelled as non-smokers who are really smokers. 
+
+How can we adjust this? Well, we know the fraction of smokers in the original sample was closer to 45 percent than 8 percent. So, we can adjust for that some. 
+
+```{r}
+tally(~ SmokeNum, data = logmodaugment)
+3108/6971
+```
+
+```{r}
+with(logmodaugment, quantile(.fitted, 1-0.45)) #need the upper cutoff because 55% are non-smokers
+logmodaugment <- mutate(logmodaugment, binprediction2 = as.numeric(.fitted > 0.4456054))
+tally(~ binprediction2, data = logmodaugment)
+```
+
+(There are some other ways to work at adjusting this, but the idea was we knew the number of smokers was more than 8 percent). 
+
+Now the confusion matrix looks like:
+
+```{r}
+with(logmodaugment, table(SmokeNum, binprediction2))
+correct2 <- (2198 + 1493)/6971; correct2
+```
+
+Now we are 52.95 percent accurate, but have better captured the fraction of smokers in the data. What does this mean? It means our model doesn't fit very well. There doesn't appear to be much of a relationship here to capitalize on in terms of making predictions. Maybe we should include a few other predictors. 
+
+
+## Multiple Logistic Regression (Chapters 10-11)
+
+In our last example, we saw that there wasn't really much signal trying to predict smoking status based on BPSysAve. Now, with multiple logistic regression, we can add more predictors. We continue examining the same basic relationship, so some commands from above are still relevant. 
+
+```{r}
+NHANES2 <- filter(NHANES, Smoke100 != "NA") %>% mutate(SmokeNum = as.numeric(Smoke100)-1)
+```
+
+With our numeric version of the response, we can fit our model, now with additional predictors. You can again make empirical logit plots using the function provided above.
+
+```{r}
+logm <- glm(SmokeNum ~ BPSysAve + Age + Gender + BMI + Pulse, data = NHANES2,
+        family = binomial(logit))
+msummary(logm)
+lrtest(logm)
+exp(confint(logm))
+logmaugment <- augment(logm, type.predict = "response")
+```
+
+For a nested drop in deviance procedure, we need a second reduced model. The challenge here is that if you fit the model on NHANES2, you will end up with more observations because the predictors dropped had some missing values. We get around this by fitting the reduced model on the augmented data set from the full model. 
+
+```{r}
+logm2 <- glm(SmokeNum ~ Age + Gender + BMI, data = logmaugment, family = binomial(logit))
+msummary(logm2)
+G <- 9311.0 - 9262.7; G
+lrtdf <- 6915 - 6913; lrtdf
+pchisq(G, df = lrtdf, lower.tail = FALSE)
+```
+
+You can also have the computer do these computations with:
+
+```{r}
+anova(logm2, logm, test="Chisq")
+```
+
+This suggests we should keep the larger "full" model. How well is that model doing? Well, we can look at a confusion matrix again:
+
+```{r}
+logmaugment <- mutate(logmaugment, binprediction = round(.fitted, 0))
+tally(~ binprediction, data = logmaugment)
+2004/6971
+```
+
+We see that 28.7 percent of individuals are predicted to be smokers, so we may still need to adjust this. 
+
+```{r}
+with(logmaugment, table(SmokeNum, binprediction))
+correct <- (2972 + 1144)/6971; correct
+```
+
+We are 59% correct. Does adjusting the number of predicted smokers up help?
+
+```{r}
+with(logmaugment, quantile(.fitted, 1-0.45))
+logmaugment <- mutate(logmaugment, binprediction2 = as.numeric(.fitted > 0.4583052))
+tally(~ binprediction2, data = logmaugment)
+```
+
+Now the confusion matrix looks like:
+
+```{r}
+with(logmaugment, table(SmokeNum, binprediction2))
+correct2 <- (2348 + 1630)/6971; correct2
+```
+
+Alas, this correction does not seem to indicate that our model does a good job. 
+
+How else can we check how the model is doing? We can check concordance. 
+
+```{r}
+#***FUNCTION TO CALCULATE CONCORDANCE AND DISCORDANCE***#
+Association <- function(model)
+{
+  Con_Dis_Data <- cbind(model$y, model$fitted.values)
+  ones <- Con_Dis_Data[Con_Dis_Data[, 1] == 1, ]
+  zeros <- Con_Dis_Data[Con_Dis_Data[, 1] == 0, ]
+  conc <- matrix(0, dim(zeros)[1], dim(ones)[1])
+  disc <- matrix(0, dim(zeros)[1], dim(ones)[1])
+  ties <- matrix(0, dim(zeros)[1], dim(ones)[1])
+    for (j in 1:dim(zeros)[1])
+    {
+      for (i in 1:dim(ones)[1])
+      {
+        if (ones[i, 2] > zeros[j, 2])
+        {conc[j, i] = 1}
+        else if (ones[i, 2] < zeros[j, 2])
+        {disc[j, i] = 1}
+        else if (ones[i, 2] == zeros[j, 2])
+        {ties[j, i] = 1}
+      }
+    }
+  Pairs <- dim(zeros)[1]*dim(ones)[1]
+  PercentConcordance <- (sum(conc)/Pairs)*100
+  PercentDiscordance <- (sum(disc)/Pairs)*100
+  PercentTied <- (sum(ties)/Pairs)*100
+  return(list("Percent Concordance" = PercentConcordance, 
+              "Percent Discordance" = PercentDiscordance,
+              "Percent Tied" = PercentTied, "Pairs" = Pairs))
+}
+#***FUNCTION TO CALCULATE CONCORDANCE AND DISCORDANCE ENDS***#
+```
+
+This function will calculate concordance and discordance values. Depending on the number of observations, this computation can take a while. 
+
+```{r}
+Association(logm)
+```
+
+The model concordance is only 60%. We'd get 50% with a coin flip. This indicates the model does not fit very well. 
+
+There are other pseudo-Rsquared type statistics out there:
+
+```{r}
+round(PseudoR2(logm, "all"), 2)
+```
+
+The gist here is that the model does not fit well. 
+
+Finally, a last topic from chapter 11, section 2, has to do with overdispersion. Here, I show the adjustment that should be made to code when issues with overdispersion occur. 
+
+```{r}
+logm3 <- glm(SmokeNum ~ BPSysAve + Age + Gender + BMI + Pulse, data = NHANES2,
+    family = quasibinomial(logit))
+msummary(logm3)
+```
+

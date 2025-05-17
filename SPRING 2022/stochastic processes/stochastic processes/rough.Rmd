@@ -1,0 +1,25 @@
+---
+title: "rough"
+author: "dm"
+date: "2/8/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+matrixpower <- function(mat,k) {
+	if (k == 0) return (diag(dim(mat)[1])) 
+	if (k == 1) return(mat)
+	if (k > 1) return( mat %*% matrixpower(mat, k-1))
+}
+
+p_mat <- matrix(c(0,1,0,0,
+                     1/4,0,3/4,0,
+                     0,1/4,0,3/4,
+                     0,0,1,0),nrow=4)
+
+p <- matrixpower(p_mat,3)
+p
+```
+

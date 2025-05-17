@@ -1,0 +1,180 @@
+---
+title: "Stat 230 - Basic R you may remember"
+author: "P.B. Matheson adapted from Shu-Min Liao"
+date: "Feb 7, 2022"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, include = FALSE}
+require(mosaic)
+library(mosaic)
+library(Stat2Data)
+options(digits = 6)
+```
+
+
+## Basics
+\begin{enumerate}
+\item We will always use the mosaic package - begin with require(mosaic)
+\item Sometimes we will use mosaic data sets - use require(mosaicData)
+\item We will use the ggformula commands to create graphics
+\item You should spell check your work (see the Edit pulldown menu and click Check Spelling)
+\item Sometimes we will load some of the data sets from our book (Stat2Data) - A link will be provided.
+\end{enumerate}
+
+## Help
+\begin{enumerate}
+\item Watch the "Getting Started" videos from Nick Horton (in numerical order) at //nhorton.people.amherst.edu/rstudio/
+\item If you aren't sure how to use a particular command type ? and the command in the console to learn more, for example - ?tally
+\item See the resources in Moodle under "All Things R"
+\end{enumerate}
+
+Examples of R commands below are given based on variables from the dataset called HELPrct.  
+The HELP study was a randomized clinical trial (rct) for adult inpatients recruited from a detoxification unit. Patients with no primary care physician were randomized to receive a multidisciplinary assessment and a brief motivational intervention or usual care, with the goal of linking them to primary medical care.
+The cesd variable represents a Center for Epidemiologic Studies Depression measure at baseline (high scores indicate more depressive symptoms).
+The mcs variable represents the SF-36 Mental Component Score (measured at baseline, lower scores indicate worse status).
+
+We are using the four step modeling process of CHOOSE, FIT, ASSESS and USE.  The first step is CHOOSE and all the commands given below will help you choose the right statistics and visualizations. The type of analysis that you can do depends on the type of data you have and how many variables you are considering.
+Is it qualitative (categorical like dogs vs. cats) or quantitative (IQ or height)?
+Do you have 1 variable, 2 variables, or 3 variables?
+
+\newpage
+## UNIVARIATE - examining one variable
+
+The basic structure is:
+
+ command ( ~ varname, data = ds)
+ where varname is the name of the variable you want to look at and ds is the data file you are working on
+ 
+### Qualitative/Categorical variables - see examples in the R chunk below
+a) can use numerical summaries such as frequencies, relative frequencies (proportions) via the tally command
+
+```{r}
+tally (~substance, data=HELPrct)
+tally (~substance, format="proportion", data=HELPrct)
+```
+  
+b) can use graphical displays such as bar chart, pie chart
+ 
+```{r}
+gf_bar (~substance, data=HELPrct)
+pie ( sort( tally(~substance, data=HELPrct) ) )
+```
+
+
+### Quantitative variables - see examples in the R chunk below
+a) can use summary statistics: 5 number, median and IQR, Mean and SD
+```{r}
+favstats(~cesd, data=HELPrct)
+```
+
+b) can use graphical displays: histogram, boxplot, density plot
+```{r}
+gf_boxplot (~cesd, data=HELPrct)
+gf_histogram (~cesd, bins=10, data=HELPrct)
+gf_density (~cesd, data=HELPrct)
+```
+
+\newpage
+## BIVARIATE - examining two variables
+
+The general form is:
+ 
+ command (Y ~ X, data=ds) where Y is the outcome and X is the explanatory variable, ds is the name of the dataset you are using.
+ 
+
+### 2 Qualitative variables - see examples in the R chunk below
+a) can use numerical summaries such as a two-way table 
+```{r}
+tally (sex ~ substance, data=HELPrct)
+tally (sex ~ substance / sex, format="proportion", data=HELPrct)
+```
+
+b) can use graphical displays such as side-by-side or segmented bar chart
+```{r}
+gf_counts(~sex, fill= ~substance, position=position_dodge(), data=HELPrct)
+gf_percents(~sex, fill= ~substance, position="fill", data=HELPrct)
+mosaicplot(sex ~ substance, color=TRUE, main="Substance abuse type by Sex", data=HELPrct)
+```
+
+
+### 1 Quantitative variable and 1 Qualititative var (grouping variable) - see examples in R chunk below
+a) can use summary statistics such as favstats by group
+```{r}
+favstats(cesd ~ substance, data=HELPrct)
+```
+ 
+b) can use graphical displays such as side-by-side boxplots/histograms, overlaid densityplots
+```{r}
+gf_boxplot(cesd ~ substance, data=HELPrct)
+gf_histogram(~cesd | substance, data=HELPrct)
+gf_dens(~cesd, color= ~substance, data=HELPrct)
+```
+ 
+### 2 Quantitative variables - see examples in the R chunk below
+ can use scatterplot, correlation, and simple linear regression (SLR)
+```{r}
+gf_point(cesd ~ mcs, data=HELPrct)
+cor(cesd ~ mcs, data=HELPrct)
+mod1 <- lm(cesd ~ mcs, data=HELPrct)
+gf_point(cesd ~ mcs, data=HELPrct) %>%
+   gf_lm()
+gf_point(residuals(mod1) ~ fitted(mod1), data=HELPrct)
+```
+ 
+We will go more in depth about SLR in the next R activity.
+
+\newpage
+## MULTIVARIATE - examining 3 variables
+
+The general form is:
+
+ command (Y ~ X | Z , data=ds) where Y is the outcome/response/dependent variable and X is the explanatory/predictor. 
+ Z denotes a third variable for which we want to get separate results for each level of Z.
+
+### 3 Qualitative variables - see examples in the R chunk below
+a) can use numerical summaries such as two 2-way tables
+```{r}
+tally(homeless ~ substance|sex, data=HELPrct)
+```
+
+b) can use graphical displays such as a mosaic plot
+```{r}
+mosaicplot (~sex + homeless + substance, data=HELPrct)
+
+female <- filter(HELPrct, sex == "female")
+mosaicplot(~homeless + substance, data=female)
+
+male <- filter(HELPrct, sex == "male")
+mosaicplot(~homeless + substance, data=male)
+
+```
+ 
+### 1 Quantitative (outcome/response) and 2 Qualitative variables - see examples in the R chunk below
+a) can use summary statistics such as favstats breaking down the quantitative variable by both the qualitative variables
+```{r}
+favstats(cesd ~ substance + sex, data=HELPrct)
+```
+
+b) can use graphical displays like boxplot or density plot of quantitative variable with different plots by for each level of the qualitative variable
+```{r}
+gf_boxplot (cesd ~ substance | sex, data=HELPrct)
+gf_dens(~cesd | sex, color= ~substance, data=HELPrct)
+```
+
+### 2 Quantitative variables and 1 Qualitative variables - see examples in the R chunk below
+can use scatterplot of the two quantitative varibles differentiated by the qualitative variable
+```{r}
+gf_point(cesd ~ mcs, color= ~ sex, data=HELPrct) %>%
+   gf_lm()
+```
+

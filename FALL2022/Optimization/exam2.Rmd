@@ -1,0 +1,42 @@
+```{r}
+# CLP example
+
+library(CVXR)
+
+X <- Variable(rows=2, cols=2, PSD = T)
+
+C <- matrix(c(4,1,1,2),nrow=2)
+A1 <- matrix(c(2,1,1,4),nrow=2)
+b1 <- 3
+A2 <- matrix(c(1,1,1,1),nrow=2)
+b2 <- 1
+
+# objective <- 4*X[1,1]+1*X[1,2]+1*X[2,1]+2*X[2,2]
+objective <- sum(C*X)
+
+# constraint <- 3*X[1,1]+2*X[1,2]+2*X[2,1]+5*X[2,2] == b
+constraint1 <- sum(A1*X) == b1
+constraint2 <- sum(A2*X) == b2
+
+prob <- Problem(Minimize(objective), list(constraint1,constraint2))
+result <- solve(prob)
+Xmin <- result$getValue(X)
+eigen(Xmin)
+optimal_primal <- result$value # optimal value
+
+# dual problem to the CLP
+
+S <- Variable(rows=2, cols=2, PSD = T) # slack matrix
+y1 <- Variable()
+y2 <- Variable()
+
+constraint <- y1*A1 + y2*A2 + S == C
+
+objective <- b1*y1 + b2*y2
+
+prob <- Problem(Maximize(objective), list(constraint))
+result <- solve(prob)
+y1Val <- result$getValue(y1)
+y2Val <- result$getValue(y2)
+optimal_dual <- result$value # optimal value
+```

@@ -1,0 +1,141 @@
+---
+title: "Homework 8  - Stats 230 (Two-way ANOVA with Interaction and Randomization of F tests : (Happy Faces, Swahili & Fruit Flies)"
+author: "Dhyey Mavani"
+date: "date"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+Due to exam proximity, no late submissions are allowed.
+
+```{r, include = FALSE}
+library(mosaic)
+library(Stat2Data)
+library(DescTools)
+options(digits = 6)
+```
+
+### PROBLEMS TO TURN IN: #7.32, #7.34ab, #8.34 (interpret output with code given), 
+
+#### Exercise 7.32
+
+> 7.32 part a:
+
+The two factors of interest are Face and Gender. I think Gender is Observational factor and Face is experimental factor. There are two levels to Gender, namely "M" and "F" signifying Male and Female respectively. There are two levels to Face, namely "Yes" and "No" signifying whether or not a happy face  was drawn at the back of customers' checks respectively. 
+
+
+> 7.32 part b:
+
+SOLUTION: I think there is evidence of interaction between these two variables because we can see that the levels are different, or the so-called slopes of the connecting lines are different in the case of HappyFace variable being "Yes" and "No". The interaction we can see here is the difference in differences form. In words, we can say that if a Happy face is drawn on the back of customers' checks, then the mean percent tip difference between Female and Male is more than the case when the happy face is not drawn on the back of customers' checks.
+
+There is evidence of interaction because the slopes are very different. This means that the differences in mean
+percent tip between the levels of HappyFace for each level of sex are different. Moreover, the differences in mean percent tip between the levels of sex for each level of HappyFace are different. Also, the lines cross over one
+another, indicating that the interaction is disordinal, meaning that percent tip is completely dependent on
+HappyFace.
+
+```{r}
+# Code for the plot is provided. 
+# This is not ggformula syntax because of how the data was provided - just as summary counts
+Sex <- c("M", "M", "F", "F")
+HappyFace <- c("Yes", "No", "Yes", "No")
+PercentTip <- c(18, 21, 33, 28)
+interaction.plot(Sex, HappyFace, PercentTip)
+```
+
+
+#### Exercise 7.34ab
+
+```{r}
+data(Swahili)
+```
+
+> 7.34 part a:
+
+SOLUTION: There is evidence of interaction because the slopes are different. The interaction term between province and sex is significant, with a p-value of the F-test being 1.66e-13 < 0.05. 
+
+From the figure it is apparent that females in PWANI have higher Attitude.Score than females in NAIROBI. Also, we can see that males in PWANI have higher Attitude.Score than males in NAIROBI. Moreover we can say that the difference in Attitude Scores of males between Provinces PWANI and NAIROBI is significantly more than the difference in Attitude Scores of females between Provinces PWANI and NAIROBI. This tells us that there is interaction between province and sex.
+
+```{r, message = FALSE}
+gf_line(Attitude.Score ~ Province, color = ~ Sex, data = Swahili, group = ~ Sex, 
+        stat = "summary", fun.y = "mean")
+```
+
+
+> 7.34 part b:
+
+SOLUTION: 
+
+We have equal variance of errors because we can see the mostly equal spread of points around the x-axis in the residuals vs fitted plot. 
+
+Normality of errors is almost satisfied because we can see the qq plot with some of the points not falling along the line, but I don't see that alarming of a concern. 
+
+We can see that there is slight heteroskedasticity as the spread of points on left is slightly greater than that in right.
+
+Finally, by the construction of the experiment, the samples are independent, and we can say that the treatment groups all have the same sample size so there is nothing to worry about there. 
+
+Hence, all conditions for using the ANOVA model are satisfied. I would, however, consider transforming the response variable to try to eliminate the pattern in the points in the normal qq plot.
+
+```{r}
+mod2 <- lm(Attitude.Score ~ Province*Sex, data = Swahili)      #added interaction term by using *
+anova(mod2)
+aovmod2 <- aov(Attitude.Score ~ Province*Sex, data = Swahili)    
+summary(aovmod2)
+model.tables(aovmod2) 
+```
+
+```{r}
+mplot(mod2, which = 1) 
+mplot(mod2, which = 2)
+```
+
+
+#### Exercise 8.34
+
+```{r}
+data(FruitFlies)
+```
+
+This next part is not required but to make sure we perform the correct permutation/randomization test, we want to be sure we've got the correct original statistic from the original model. This isn't strictly necessary, as the problem gave us the F value and we could just use that instead.  
+
+Note there IS a typo there, where they say 13.61 first and then 13.62 later. It's really 13.612. 
+
+```{r}
+anova(lm(Longevity ~ Treatment, data = FruitFlies))$"F value"
+```
+
+This is the same 13.61 described in the text, so we have the correct starting model. 
+
+
+The text requests doing the randomization 10000 times, so we set that up in the next code chunk. 
+
+```{r, cache = TRUE}
+set.seed(230) #make the results reproducible
+t <- do(10000) * (anova(lm(shuffle(Longevity) ~ Treatment, data = FruitFlies))$"F value")
+```
+
+Now that we've performed the procedure, we can answer the questions that the text asks. We don't need a plot of the randomization distribution for this, but it's included it for reference.
+
+```{r}
+t <- as.data.frame(t)
+
+favstats(~ V1, data = t)
+
+gf_dens(~ V1, data = t) %>% 
+  gf_lims(x = c(0, 15)) %>%
+  gf_vline(xintercept = 13.612, color = "red") %>%
+  gf_labs(title = "Randomization Distribution for F from One-Way ANOVA") 
+  
+pdata(~ V1, 13.612, data = t, lower.tail = FALSE)
+```
+
+SOLUTION: 
+
+None of my randomization F-statistics were greater than 13.62, and the biggest value I got for the F-statistic was 6.25308. 

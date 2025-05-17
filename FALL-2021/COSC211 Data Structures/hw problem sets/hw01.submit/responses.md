@@ -1,0 +1,17 @@
+1) Consider the addFirst and addLast methods for your CADeque. How does the running time of these methods depend of the size of the deque?
+
+The running times of these methods seem to be relatively constant for CADeque for a per element basis, regardless of the instance size (the instance sizes tested were steps of size 500,000 to a max size of 25,000,000). However, for each of these our add first method seemed to be a little slower than our add last method. The average add times differ by about 300 milliseconds (163ms for addLast to 436ms for addFirst), but this value is somewhat skewed due to fluctuations in the larger instance sizes and time scales. Overall, both the timing of filling the deques increase linearly with time (meaning that on a per element basis the additions are relatively constant timewise) just the rate of this increase differs slightly. This can also be seen on the graph titled "CAadd" that is included in this folder.
+
+2) Consider the addFirst and addLast methods for your DLLDeque. How does the running time of these methods depend of the size of the deque?
+
+The running times of these methods also seem to be relatively constant on a per element basis (meaning the time to fill the entire deque increase linearly instance size). However, neither seems to be definitively faster as in the case of our CA Deque. There are slight fluctuations that cause addFirst or addLast to be faster in specific instances but the average time to fill our deque for addFirst vs addLast is very similar (1561ns for addLast vs 1442ns for addFirst). This relationship can again be seen on the graph "DLLadd" which is included in the submitted folder.
+
+
+3) How do the running times of addFirst and addLast compare between your CADeque and DLLDeque compare with each other? Which is faster for large deques? For small deques?
+
+Across the two implementations we see that both adding methods for the CA deque are faster than both adding methods for the DLL Deque. We can see this as the previously sited average times given the same instance sizes differ by around 10 times. This pattern is consistent for small and large deques though it is more pronounced in the larger deques due to the linear increase time it takes for the deques to be filled. Though the DLL deque does have some advantage over the CA deque in the ease of its implementation, it is less efficient time wise. Again, these trends can be seen in the chart titled "CAvsDLL".
+
+
+4) How do the running times of addFirst and addLast compare between your implementations and the provided list-based implementations, ASLDeque and LSLDeque?
+
+The running times for the ASL addFirst and LSL addLast were extremely slow compared to the other ASL and LSL methods and both DLL and CA methods. Those two methods in particular seemed to increase in time exponentially, meaning we had to drastically decrease the instance size (from a max of 25,000,000 to 50,000) in order for the timer program to run. The ASL addLast and LSL addFirst are faster as they require no new array production or linked list iteration - thus they also increase in linear time similar to our DLL and CA methods. This trend is visible on the chart "AllDeques" as the two slow methods increase expontentially with time whereas all other methods complete in less than a nanosecond given the smaller instance sizes. 

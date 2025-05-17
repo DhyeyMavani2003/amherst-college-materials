@@ -1,0 +1,213 @@
+---
+title: "HANDOUT STATS 230- polynomial regression & multicollinearity"
+author: "P.B. Matheson adapted from A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, include = FALSE}
+library(mosaic)
+library(GGally)
+```
+
+
+### MLR: Polynomial Regression (focus on quadratic and complete second-order models) 3.4
+
+
+#### set up some data for x and y that has a quadratic relationsip
+
+```{r}
+set.seed(230)
+#next command creates a new variable x with a normal distribution
+x <- rnorm(100, 5, 3) #100 is the sample size, mean=5 and sd=3
+#next command creates a new variable y that is not normally distribute with a 
+#curved relationship with x
+y <- 6*x - 2*x^2 + rnorm(100, 0, 7) #Y=6X-2X^2+epsilon
+```
+
+#### Try fitting a simple linear model
+
+```{r}
+#just SLR 
+mod1 <- lm(y ~ x)
+msummary(mod1)
+mplot(mod1, which = 1)
+mplot(mod1, which = 2)
+```
+
+Does a simple linear model fit well?
+
+
+Try a polynomial regression. Here we will try a quadratic regression with (xsquare) added as a term.  Could also try a cubic regression with x cubed.
+```{r}
+#create a new variable xsq which is x squared
+xsq <- x^2  
+
+gf_point(y ~ xsq) %>%
+   gf_lm()
+mod2 <- lm(y ~ xsq)
+msummary(mod2)
+mplot(mod2, which = 1)
+mplot(mod2, which = 2)
+```
+
+This model seems to improve the fit, but we still see some pattern in the residuals. We might need to keep the linear term (x) and add the quadratic re-expression (xsq). 
+
+```{r}
+
+mod3 <- lm(y ~ x + I(x^2)) #quadratic model
+msummary(mod3)
+mplot(mod3, which = 1)
+mplot(mod3, which = 2)
+```
+
+IMPORTANT NOTE FOR POWERS: R will not understand x^2 in the lm command as x^2 unless you put I() around it. The same goes for other powers of either variable. You could also re-express like we did above, add the new variable to your data set (here we could use xsq we already created).  
+
+Finally, we can see what a cubic model would look like.
+
+```{r}
+mod4 <- lm(y ~ x + I(x^2) + I(x^3)) #cubic model
+msummary(mod4)
+mplot(mod4, which = 1)
+mplot(mod4, which = 2)
+```
+
+The cubic model doesn't seem to give us anything useful, although, we can see the cubed term has a non-significant slope, suggesting we can remove it from the model with the quadratic and linear terms left in.
+
+
+### MLR: Multicollinearity and VIFs (3.5)
+
+Researchers observed the following data on 20 individuals with high blood pressure:
+
+* blood pressure ($BP$, in mm Hg)
+* age ($Age$, in years)
+* weight ($Weight$, in kg)
+* body surface area ($BSA$, in $m^2$)
+* duration of hypertension ($Dur$, in years)
+* basal pulse ($Pulse$, in beats per minute)
+* stress index ($Stress$)
+
+Our goal is to build a model for blood pressure as a function of (some subset) of the other variables. In this case all of our variables are quantitative, so we can get a quick look at their relationships using the *ggpairs* command.
+
+```{r}
+BP <- read.csv("https://pmatheson.people.amherst.edu/stat230/bloodpress.csv")
+ggpairs(BP)
+```
+
+What do you see in these scatterplots? Which of the variables are most highly correlated with $BP$? 
+
+
+#### A First Model
+
+$Weight$ seems to be highly correlated with $BP$, so as a first step, we should understand how well a simple linear model for blood pressure as a function of weight works. Keep in mind that it makes sense that that there would be a strong link between a person's weight and their blood pressure. This is face validity.
+
+```{r}
+gf_point(BP ~ Weight, data = BP) %>%
+  gf_lm()
+
+fm1 <- lm(BP ~ Weight, data=BP)
+msummary(fm1)
+```
+
+How well does the SLR model for blood pressure work? 
+
+
+Check the assumptions for SLR. Are they met? 
+
+```{r}
+mplot(fm1, which = 1)
+mplot(fm1, which = 2)
+```
+
+
+#### The Kitchen Sink
+
+The SLR model for blood pressure is pretty effective, but there is one person who generates a large residual. We want to use the additional data that we have to build a better model for blood pressure. 
+
+```{r}
+BP[20,]
+```
+
+Without any intuition, one way to proceed is to simply throw all of the variables into our regression model. In a sense, we are throwing everything but the kitchen sink into the model. 
+
+```{r}
+# Using the . in the formula interface includes all possible predictor variables in the data frame (excludes the response(y) variable)
+fm.full <- lm(BP ~ ., data = BP)
+msummary(fm.full)
+mplot(fm.full, which = 1)
+mplot(fm.full, which = 2)
+```
+
+We have a very high $R^2$ with the kitchen sink model.  However, there are still some issues with the normality of the residuals. Moreover, the coefficient for $Pulse$ is negative, suggesting that people with higher pulse rates have lower blood pressure. Does this make sense? Three of the coefficients in the model are close to zero and not significant at the 10% level. 
+
+#### Checking for Multicollinearity - are the predictors correlated with each other? 
+
+The easiest way to check for multicollinearity is by computing the Variance Inflation Factor (VIF) for each explanatory variable. This function is in the *car package*, so it is called here from the package. You could alternatively load the package then just call *vif*, but since we only need the package for THIS function, and *car* can cause issues with other functions (conflicts) this seems easier. 
+
+```{r}
+# Note that this computation requires the "car" package! be sure you call it.
+car::vif(fm.full) #calls for vif function from car package without loading rest of car
+```
+
+VIFs higher than 5, such as those for $Weight$, $BSA$, and $Pulse$ (4.4 is still high compared to the rest) indicate that those variables are highly associated with the other explanatory variables or some linear combination of the other explanatory variables. To see this, we can manually compute the VIF for $Weight$, by regressing it against the other explanatory variables. This lets us look for the linear combination of other variables that $Weight$ is related to. 
+
+```{r}
+# here we are predicting weight (which was one of the original predictors from the other predictors)
+fm.vif <- lm(Weight ~ Age + BSA + Dur + Pulse + Stress, data = BP)
+msummary(fm.vif)
+#the next command demonstrates how the VIF from above was calculated.  This is only for demonstration.  You can use the car::vif  command to get them.
+1 / (1 - rsquared(fm.vif))
+```
+
+Note that if this kind of regression works well, then $R^2$ will be high, and the VIF will become very large. A similar computation can be performed for each of the explanatory variables if you would like to see it. 
+
+Another window into the entangled web of our explanatory variables is to examine the correlation between every pair. This helps you identify pairwise correlations but not more complicated relationships that the linear combinations might result in. 
+
+```{r}
+# correlation between every pair of variables in the data set; works if all are quantitative
+# otherwise, use select to remove categorical variables
+cor(BP)
+```
+
+Note that $BSA$ and $Weight$ are strongly correlated. Can you think of why this might be?   
+Moreover, $Pulse$ is fairly correlated with $Age$, $Weight$, and $Stress$.   
+Since we know that $Weight$ is strongly correlated with $BP$ to begin with, we'll want to keep this variable in our model. 
+You DON'T have to remove the variable with the highest VIF!   
+
+Let's try removing $BSA$ and $Pulse$ though. 
+
+```{r}
+fm2 <- lm(BP ~ Weight +  Age + Dur + Stress, data = BP)
+msummary(fm2)
+car::vif(fm2)
+mplot(fm2, which = 1)
+mplot(fm2, which = 2)
+```
+
+This simpler model explains almost as much of the variation as the full model, but with two fewer explanatory variables. Moreover, the residuals are closer to being normal, and the high VIFs have been eliminated. This model should be preferred to the full model. 
+
+Still, two of the variables in the reduced model ($Dur$ and $Stress$), do not seem to be contributing much to the model (why do I make that claim?). Let's see what happens if we eliminate them. 
+
+```{r}
+fm3 <- lm(BP ~ Weight +  Age, data = BP)
+msummary(fm3)
+car::vif(fm3)
+mplot(fm3, which = 1)
+mplot(fm3, which = 2)
+```
+
+Which is the best model?
+
+
+
+This model is again nearly as effective as the full model, with no evidence of multicollinearity, and more normally distributed residuals. What we have lost in $R^2$, we have more than made up for in simplicity and conformity to our assumptions. 
+
+

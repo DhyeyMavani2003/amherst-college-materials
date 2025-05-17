@@ -1,0 +1,151 @@
+---
+title: "Lab 6 - Added Variable Plots, Unusual Points, Choosing Predictors(4.1, 4.2 and 4.4)"
+author: "P.B. Matheson adopted from A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+You should not need to write your own code unless you choose to remove the unusual points after identifying them. The lab is one long example. Work with your lab partners to address the questions throughout. 
+
+```{r, include = FALSE}
+library(mosaic)
+library(leaps)
+library(broom)
+```
+
+For this lab, we will be investigating a data set on bulls sold at auction, trying to understand the relationships between certain variables. In particular, we want to see if we can predict the sale price of the bulls. 
+
+
+```{r}
+Bulls <- read.table("https://pmatheson.people.amherst.edu/stat230/bulls.txt", header = T)
+glimpse(Bulls)
+```
+
+The summary reveals the following variables are present: **breed** where 1- Angus, 5- Hereford, 8 - Simental, **salepr** - sale price, **yrhgt** = yearling height at shoulder (inches), **ftfrbody** = fat free body (pounds), **prctffb** = percent fat-free body, **frame** = scaled from 1-8 (1 = small, 8 = large), **bkfat** = back fat (inches), **saleht** and **salewt** = sale height at shoulder (inches) and weight (pounds).
+
+You may have noticed that R is currently providing a NUMERIC summary for breed. That is because it doesn't know it should be a factor variable (categorical). We can adjust that as follows:
+
+```{r}
+# Bulls <- mutate(Bulls, breed = as.factor(breed)) #quick easy but no labels (to show you how this can be done)
+Bulls <- mutate(Bulls, breed = cut(breed, breaks = c(0, 4, 6, 10), labels = c("Angus", "Hereford", "Simental"), include.lowest = TRUE))#adds nice labels
+glimpse(Bulls)
+```
+
+You might wonder why the breaks were selected as those values. The breed values were 1, 5, and 8, so these choices for cuts separate those 3 numbers. Other values would also have worked. 
+
+Our goal is to predict **salepr** so let's begin by fitting a full model. (We are skipping checking linearity with scatterplots so we can get to the concepts here.)
+
+```{r}
+fmfull <- lm(salepr ~ ., data = Bulls)
+msummary(fmfull)
+car::vif(fmfull)
+```
+
+Does this output resemble the VIF output we had previously? If not, what is different? Why might that be?
+
+SOLUTION:
+
+There appear to be some multicollinearity issues, so before we continue, let's remove yearling height and frame. These two variables appear to be highly correlated with saleht. Does multicollinearity have to be only pairwise between predictor variables?
+
+SOLUTION:
+
+```{r}
+cor(select(Bulls, yrhgt, frame, saleht))
+```
+
+
+We refit the *full* model to proceed. 
+
+```{r}
+fmfull <- lm(salepr ~ breed + ftfrbody + prctffb + bkfat + saleht + salewt, data = Bulls)
+msummary(fmfull)
+car::vif(fmfull)
+```
+
+There may still be some issues, but this is better, no VIF (GVIF) is over 5. 
+
+For this model, does it appear that all predictors are significant with the rest in the model? 
+
+SOLUTION:
+
+What percentage of variability in the response does this model explain?
+
+SOLUTION:
+
+### Added Variable Plots (4.1)
+
+We can use added variable plots to see what the relationships are between predictors and the response with other variables in the model. 
+
+Investigate the added variable plots for *prctffb* and *saleht* and explain what they show you. In particular, which of these two variables would you want to keep in the model?
+
+```{r}
+car::avPlots(fmfull)
+```
+
+SOLUTION: For prctffb, the added variable plot shows a tiny negative association between the two sets of residuals, but it isn’t likely strong enough to warrant keeping prctffb in the model with the other variables included. For saleht, we see a clear positive association between the sets of residuals, which suggests saleht is important (it adds something) to the model when the other variables are included. We see a few points that may be unusual in both of these plots. We would keep saleht but probably not prctffb in the model. (And may remove other variables as well.)
+
+### Variable Selection Automated Techniques (4.2)
+
+```{r}
+fmfull <- lm(salepr ~ breed*saleht + ftfrbody + prctffb + bkfat + salewt, data = Bulls) #note an interaction is included here!
+msummary(fmfull)
+```
+
+Best Subsets and Mallow's Cp Code
+
+```{r}
+best <- regsubsets(salepr ~ breed*saleht + ftfrbody + prctffb + bkfat + salewt, data = Bulls, nbest = 1)
+with(summary(best), data.frame(rsq, adjr2, cp, outmat))
+```
+
+Using Cp as our criteria for the best model, we want the fourth row, which says the model with the lowest Cp contains: saleht, ftfrbody, bkfat, and then the interaction between breedSimental and saleht. In order to include that interaction, we have to keep breed in the model as well (and will have Hereford terms as well). Thus, (by convention of keeping lower order terms and other levels of categorical variables) the model this is effectively telling us to use is:
+
+```{r}
+Cpmod <- lm(salepr ~ breed*saleht + ftfrbody + bkfat, data = Bulls)
+msummary(Cpmod)
+```
+
+(Note that if we really think there is no difference between Angus and Hereford, we could redefine the breed levels and make the variable binary.)
+
+Are all the predictors significant in this model?
+
+SOLUTION:
+
+Let's see what model(s) the other three methods of automated variable selection suggest.
+
+Backward Elimination
+
+```{r}
+backward <- regsubsets(salepr ~ breed*saleht + ftfrbody + prctffb + bkfat + salewt, data = Bulls, method = "backward", nbest = 1)
+with(summary(backward), data.frame(cp, outmat))
+```
+
+
+Forward selection
+```{r}
+forward <- regsubsets(salepr ~ breed*saleht + ftfrbody + prctffb + bkfat + salewt, data = Bulls, method = "forward", nbest = 1)
+with(summary(forward), data.frame(cp, outmat))
+```
+
+Stepwise Regression
+
+```{r}
+stepwise <- regsubsets(salepr ~ breed*saleht + ftfrbody + prctffb + bkfat + salewt, data = Bulls, method = "seqrep", nbest = 1)
+with(summary(stepwise), data.frame(cp, outmat))
+```
+
+
+What final model(s) do all three of these methods propose using Cp as the criterion? Is it the same as the model suggested by the best subsets method (though we had to adjust that one to include breed to get the desired interaction)?
+
+SOLUTION:
+
+
+
+Remember, automated techniques can only help so much! The computer can't "think" about what makes sense in a model. You should use your own knowledge and expert opinion (from experts!) to assist whenever possible.

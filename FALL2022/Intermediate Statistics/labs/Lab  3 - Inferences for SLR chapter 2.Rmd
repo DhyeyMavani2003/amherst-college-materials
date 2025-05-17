@@ -1,0 +1,169 @@
+---
+title: "HANDOUT : Lab3  Stat 230 - SLR for Chapter 2"
+author: "P.B. Matheson adapted from A.S. Wagaman"
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+### Chapter 2 Practice
+```{r, include = FALSE}
+library(mosaic)
+```
+
+#### Real Data 
+
+Recall that previously we looked at the Boston data set. 
+
+```{r}
+boston <- read.table("http://awagaman.people.amherst.edu/stat230/boston.txt", header = TRUE)
+```
+
+Recall that this is a data set on 14 variables on housing values in the suburbs of Boston. Variables include crime, zone (deals with residential proportion of housing), indust (deals with industry proportion), charles (on river or not), nox (amount of nitric oxides), rooms (avg. number per dwelling), age (proportion built before 1940), distance (weighted to 5 employment centers), radial (index of access to highways), tax (property tax per $10,000), ptratio (pupil-teacher ratio), minor (index of proportion of minorities), lstat (% lower status of population), and medv (median value of homes).  Zone is always between 0 and 100. Charles is a binary variable. Radial is an index from 1- 24 (integers). The oddest variable is perhaps minor. Values from 196 and below indicate a large proportion of minorities. Values around 396 indicate a completely non-minority area, and values below 396 down to 196 indicate areas that have decreasing proportions of minorities. 
+
+We wanted to try to predict *nox* as a function of *distance*. 
+
+```{r}
+gf_point(nox ~ distance, data = boston)
+```
+
+We had to use re-expressions so that linear regression would be acceptable here. We'll assume that everyone choose the square root of distance and log of nox. What command did we use to add new variables to the data set?
+
+> ANSWER
+
+\vspace{.3in}
+
+
+
+```{r}
+boston <- mutate(boston, lognox = log(nox), sqrtdist = sqrt(distance))
+```
+
+
+To recap, report your fitted regression line in terms of these new variables.
+
+```{r}
+fm <- lm(lognox ~ sqrtdist, data = boston)
+msummary(fm)
+gf_point(lognox ~ sqrtdist, data = boston) %>% gf_lm()
+```
+
+> ANSWER
+
+\vspace{.3in}
+
+Recall that we also had some outliers. So, let's use this data set...
+
+```{r}
+boston2 <- filter(boston, (lognox) < (-0.2), sqrtdist < 3.2)
+gf_point(lognox ~ sqrtdist, data = boston2) %>% gf_lm()
+```
+
+What observations does the boston2 data set include? How many observations meet that criteria?
+
+> ANSWER
+
+
+\vspace{.3in}
+
+
+Refit the model on the boston2 data set (code provided). Do you have any concerns about conditions based on the generated plots?
+
+```{r}
+fm2 <- lm(lognox ~ sqrtdist, data = boston2)
+mplot(fm2, which = 1)
+mplot(fm2, which = 2)
+msummary(fm2) #hint: what values can you compare between the 2 models?
+```
+
+> ANY CONCERNS?
+
+
+\vspace{1.5in}
+
+Let's continue on for practice, though some improvement might be obtainable with further variable transformations.
+
+How does this model (fm2) compare to the original fit (fm)?
+
+> COMPARISON:
+
+Now, use the anova command on the fitted model (anova(fm2)) to view the ANOVA table. 
+
+```{r}
+anova(fm2)
+```
+
+Verify that you can compute the R^2 from the ANOVA table.
+
+> Verify R-squared computation
+
+```{r}
+
+```
+
+Looking at the ANOVA table, what is the value of the MSE? How is the MSE computed from the other observations in the table?
+
+> ANSWER
+
+
+\vspace{.3in}
+
+
+Compute the residual standard error from the ANOVA table and verify it matches the value in the summary output.
+
+```{r}
+
+```
+
+How is the F-statistic in the ANOVA table computed from the other values in the table?
+
+> ANSWER
+
+
+\vspace{.3in}
+
+What is the distribution of the F test statistic assuming the null hypothesis (slope coefficient for predictor is 0) is true?
+
+> ANSWER (hint: F dist has 2 associated dfs)
+
+
+\vspace{.3in}
+
+What does the result of this F test tell you? How else can you see this in the output (because this is SLR)?
+
+> ANSWER
+
+
+\vspace{.3in}
+
+
+Next, use the predict function to generate a confidence interval for a mean response of lognox when distance is 4.5 for the original model (fm), and interpret your results. Example code is provided. 
+
+```{r}
+sqrt(4.5) #need to have square root of distance for model!
+new.data <- data.frame(sqrtdist = c(2.12132))
+predict(fm, new.data, int = "confidence", level = 0.90) #for CIs for mean response
+```
+
+> Interpret - We are 90 percent confident that ...
+
+
+\vspace{.3in}
+
+Finally, use the predict function to generate a prediction interval for an individual response of lognox when distance is 4.5, and interpret your results. 
+
+```{r}
+
+```
+
+> Interpret - 
+
+
+

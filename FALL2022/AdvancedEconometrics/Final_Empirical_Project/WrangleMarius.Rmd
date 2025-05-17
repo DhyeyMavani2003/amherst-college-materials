@@ -1,0 +1,49 @@
+---
+title: "Wrangle Marius "
+author: "Marius Cotorobai"
+date: ""
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r}
+data <- read.csv(file = 'marius.csv')
+colnames(data) <- c("country_code", 
+                    "E", "GDP",
+                    "A","I","S")
+data$E <- as.numeric(data$E)
+data$GDP <- as.numeric(data$GDP)
+data$A <- as.numeric(data$A)
+data$I <- as.numeric(data$I)
+data$S <- as.numeric(data$S)
+
+# Since you have all different countries, there is no point in replacing 
+# country codes with numbers from 1 to 121
+
+write.csv(data, file = "cleaned_marius.csv")
+```
+
+```{r}
+# Please note that you don't need S because it will be captured as the base 
+# effect when both of your A and I will be 0. Please refer to the next code 
+# chunk in order to see a better way to run this.
+
+cleaned_data <- read.csv(file = "cleaned_marius.csv")
+naive_ols <- lm(E ~ GDP*A + GDP*I + GDP*S + I(GDP^2)*A + I(GDP^2)*I + I(GDP^2)*S,
+                data = cleaned_data)
+summary(naive_ols)
+```
+
+```{r}
+cleaned_data2 <- read.csv(file = "cleaned_marius.csv")
+ols <- lm(E ~ GDP*A + GDP*I + I(GDP^2)*A + I(GDP^2)*I, data = cleaned_data2)
+summary(ols)
+```

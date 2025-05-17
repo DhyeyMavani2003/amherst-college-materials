@@ -1,0 +1,50 @@
+[
+  {
+    "name": "3-bit q; 6-bit p",
+    "input": [
+      3,
+      6
+    ],
+    "key": "Many possible answers. A few lines to check whether your answer works are provided in the testing notebook, but you'll need to provide your own prime-testing function."
+  },
+  {
+    "name": "5-bit q; 10-bit p",
+    "input": [
+      5,
+      10
+    ],
+    "key": "Many possible answers. A few lines to check whether your answer works are provided in the testing notebook, but you'll need to provide your own prime-testing function."
+  },
+  {
+    "name": "10-bit q; 20-bit p",
+    "input": [
+      10,
+      20
+    ],
+    "key": "Many possible answers. A few lines to check whether your answer works are provided in the testing notebook, but you'll need to provide your own prime-testing function."
+  },
+  {
+    "name": "32-bit q; 48-bit p",
+    "input": [
+      32,
+      48
+    ],
+    "key": "Many possible answers. A few lines to check whether your answer works are provided in the testing notebook, but you'll need to provide your own prime-testing function."
+  },
+  {
+    "name": "64-bit q; 100-bit p",
+    "input": [
+      64,
+      100
+    ],
+    "key": "Many possible answers. A few lines to check whether your answer works are provided in the testing notebook, but you'll need to provide your own prime-testing function."
+  },
+  {
+    "name": "256-bit q; 512-bit p",
+    "input": [
+      256,
+      512
+    ],
+    "key": "Many possible answers. A few lines to check whether your answer works are provided in the testing notebook, but you'll need to provide your own prime-testing function."
+  }
+]
